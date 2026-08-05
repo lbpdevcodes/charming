@@ -35,10 +35,10 @@ module Charming
   module TestHelper
     # Builds a controller instance with sensible test defaults: a fresh Application,
     # an 80x24 screen, and no event.
-    def build_controller(controller_class, app: nil, screen: nil, route: nil, event: nil)
+    def build_controller(controller_class, app: nil, screen: nil, route: nil, event: nil, params: {})
       app ||= Charming::Application.new
       screen ||= Charming::Screen.new(width: 80, height: 24)
-      controller_class.new(application: app, event: event, screen: screen, route: route)
+      controller_class.new(application: app, event: event, params: params, screen: screen, route: route)
     end
 
     # Builds a KeyEvent from a human-readable string like "q", "down", "ctrl+p",

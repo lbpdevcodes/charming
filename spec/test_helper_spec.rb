@@ -35,6 +35,11 @@ RSpec.describe Charming::TestHelper do
       expect(ctrl.screen.width).to eq(80)
       expect(ctrl.application).to be_a(Charming::Application)
     end
+
+    it "forwards route params to the controller" do
+      ctrl = build_controller(TestHelperSpecController, params: {name: "lbp.dev"})
+      expect(ctrl.params).to eq({name: "lbp.dev"})
+    end
   end
 
   describe "#key_event" do
