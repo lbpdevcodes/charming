@@ -13,6 +13,7 @@ module Journal
     on_cancel :delete_confirm, :cancel_delete
 
     def show
+      entries.items = Entry.recent_first.to_a
       entries_state.selected_index = entries.selected_index
       render :show, entries_list: entries, palette: command_palette,
         delete_confirm: pending_delete && delete_confirm
@@ -65,11 +66,12 @@ module Journal
       navigate :entry, id: entry.id
     end
 
-    # The selectable entry list. Rebuilt each dispatch, not memoized: a memoized List
-    # would keep serving stale items after records change. Selection survives via
-    # entries_state; the items must always reflect the database.
+    # The selectable entry list, memoized so j/k selection survives across events.
+    # `show` refreshes the items each render — the component holds the interaction
+    # state, the items always reflect the database. entries_state mirrors the
+    # selection so it can be restored after navigating away and back.
     def entries
-      Charming::Components::List.new(
+      @entries ||= Charming::Components::List.new(
         items: Entry.recent_first.to_a,
         selected_index: entries_state.selected_index,
         height: [screen.height - 10, 3].max,

@@ -54,6 +54,15 @@ module Charming
         clamp_position
       end
 
+      # Replaces the source items (e.g. after the underlying data changed) and
+      # reclamps the selection. Lets a memoized list stay fresh: keep the component
+      # in an ivar so its selection survives, then assign `list.items = rows`
+      # before each render.
+      def items=(new_items)
+        @source_items = new_items
+        clamp_position
+      end
+
       # Handles key events. Returns `[:selected, item]` on Enter when an item is selected;
       # otherwise delegates to the KeyboardHandler for navigation keys.
       def handle_key(event)

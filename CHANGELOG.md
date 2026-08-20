@@ -30,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Charming::Shell::Sidebar` and `Charming::Shell::Palette`: the opt-in app
   shell (sidebar navigation, command palette, `command` DSL).
 - `reset_form(:name)`: clears a form's controller-held draft state.
+- `List#items=` and `Table#rows=`: replace a memoized component's data on
+  render while its selection survives — the data-bound half of the
+  persistent-controller component pattern.
 - `Controller#component_dispatch` and `Controller#component_for(slot)`: the
   component-dispatch collaborator and the single slot-lookup point.
 

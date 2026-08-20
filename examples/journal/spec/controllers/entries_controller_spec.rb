@@ -33,6 +33,14 @@ RSpec.describe Journal::EntriesController do
     expect(response).to navigate_to(:entry, id: newest.id)
   end
 
+  it "moves the highlight with j and opens that entry on enter" do
+    ctrl.dispatch(:show)
+    older = Journal::Entry.recent_first.second
+    press(ctrl, "j")
+    response = press(ctrl, "enter")
+    expect(response).to navigate_to(:entry, id: older.id)
+  end
+
   it "toggles favorite with a toast" do
     ctrl.dispatch(:show)
     press(ctrl, "f")

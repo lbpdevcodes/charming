@@ -128,6 +128,42 @@ RSpec.describe Charming::Components::List do
     expect(list.handle_mouse(mouse)).to be_nil
   end
 
+  describe "#items=" do
+    it "replaces the items while keeping a valid selection" do
+      list = described_class.new(items: %w[Alpha Beta Gamma], selected_index: 1)
+
+      list.items = %w[Delta Epsilon]
+
+      expect(list.items).to eq(%w[Delta Epsilon])
+      expect(list.selected_item).to eq("Epsilon")
+    end
+
+    it "clamps the selection when the new list is shorter" do
+      list = described_class.new(items: %w[Alpha Beta Gamma], selected_index: 2)
+
+      list.items = %w[Delta]
+
+      expect(list.selected_item).to eq("Delta")
+    end
+
+    it "resets the selection when the new list is empty" do
+      list = described_class.new(items: %w[Alpha Beta], selected_index: 1)
+
+      list.items = []
+
+      expect(list.selected_item).to be_nil
+      expect(list.selected_index).to eq(0)
+    end
+
+    it "re-applies the active filter to the new items" do
+      list = described_class.new(items: %w[Alpha Beta], filter: "alp")
+
+      list.items = %w[Alpine Beta]
+
+      expect(list.items).to eq(%w[Alpine])
+    end
+  end
+
   describe "filtering" do
     it "narrows items with fuzzy matching, best match first" do
       list = described_class.new(items: ["Open palette", "Close panel", "Save file"], filter: "pal")

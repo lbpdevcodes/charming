@@ -83,16 +83,23 @@ def query
 end
 ```
 
-Do **not** memoize data-bound components. A memoized `List` of database rows
-serves stale items after the data changes. Rebuild those each dispatch (their
-interaction state, like selection, belongs in a `state` object):
+Data-bound components need both halves: memoize the component so its
+interaction state (selection, scroll) survives, and refresh its data on
+render. `List#items=` and `Table#rows=` exist for exactly this:
 
 ```ruby
+def show
+  entries.items = Entry.recent_first.to_a
+  render :show, entries_list: entries
+end
+
 def entries
-  Components::List.new(items: Entry.recent_first.to_a,
-    selected_index: entries_state.selected_index, ...)
+  @entries ||= Components::List.new(items: Entry.recent_first.to_a, ...)
 end
 ```
+
+Rebuilding the component per dispatch instead would discard the keypress that
+moved the selection before any state write-back could see it.
 
 Form state moved from `session[:forms]` to the controller instance. Clear a
 submitted form with `reset_form(:entry)` instead of `session[:forms]&.delete(:entry)`.

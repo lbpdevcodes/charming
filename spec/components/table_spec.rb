@@ -395,6 +395,34 @@ RSpec.describe Charming::Components::Table do
     end
   end
 
+  describe "#rows=" do
+    it "replaces the rows while keeping a valid selection" do
+      table = described_class.new(header: %w[Name], rows: [["a"], ["b"]], selected_index: 1)
+
+      table.rows = [["c"], ["d"]]
+
+      expect(table.rows).to eq([["c"], ["d"]])
+      expect(table.selected_row).to eq(["d"])
+    end
+
+    it "clamps the selection when the new rows are fewer" do
+      table = described_class.new(header: %w[Name], rows: [["a"], ["b"], ["c"]], selected_index: 2)
+
+      table.rows = [["a"]]
+
+      expect(table.selected_row).to eq(["a"])
+    end
+
+    it "resets the selection when the new rows are empty" do
+      table = described_class.new(header: %w[Name], rows: [["a"]], selected_index: 0)
+
+      table.rows = []
+
+      expect(table.selected_row).to be_nil
+      expect(table.selected_index).to eq(0)
+    end
+  end
+
   describe "sorting" do
     let(:table) do
       described_class.new(

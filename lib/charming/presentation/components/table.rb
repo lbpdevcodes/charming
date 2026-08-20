@@ -72,6 +72,15 @@ module Charming
         rows[selected_index]
       end
 
+      # Replaces the body rows (e.g. after the underlying data changed) and
+      # reclamps the selection. Lets a memoized table stay fresh: keep the component
+      # in an ivar so its selection survives, then assign `table.rows = rows`
+      # before each render.
+      def rows=(new_rows)
+        @rows = Array(new_rows)
+        @selected_index = clamp_index(selected_index)
+      end
+
       # Sorts the body rows by *column* (a header label or 0-based index).
       # Numeric-looking cells compare numerically; everything else as strings.
       # The sorted column is marked ▲/▼ in the rendered header. Returns self.
