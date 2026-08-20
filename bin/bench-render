@@ -1,0 +1,96 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Render pipeline benchmark (PRD Phase 7 Part A).
+#
+# Drives the Differential renderer with synthetic frames through a MemoryBackend
+# at three terminal sizes (80x24, 200x60, 400x110) and three workloads:
+#
+#   full    — every line changes each frame (worst case)
+#   line    — a single line changes each frame (typical edit)
+#   animate — a small region changes per tick, 150 ticks ~ 5s at 30fps
+#
+# Reports ms/frame and allocations/frame (via GC.stat). The Phase 7 decision
+# gate: if the 200x60 animate workload stays under ~4ms/frame median, the
+# string-frame renderer is fast enough and the cell buffer is deferred.
+
+require "bundler/setup"
+require "charming"
+
+module RenderBench
+  module_function
+
+  SIZES = [[80, 24], [200, 60], [400, 110]].freeze
+  ANIMATE_TICKS = 150 # 5 seconds at 30fps
+  WARMUP = 3
+
+  # A frame of *width* x *height* where every row is deterministic content
+  # derived from *seed* (so changing the seed redraws the row).
+  def frame(width, height, mutate: :all, seed: 0)
+    rows = (0...height).map do |y|
+      row_seed = mutate == :all || mutate.include?(y) ? seed : 0
+      base = "r#{y}-s#{row_seed}-"
+      base.ljust(width, "x")
+    end
+    rows.join("\n")
+  end
+
+  def renderer_for
+    backend = Charming::Internal::Terminal::MemoryBackend.new
+    Charming::Internal::Renderer::Differential.new(backend)
+  end
+
+  # Renders *frames* through a fresh renderer; returns [seconds, allocations].
+  def measure(frames)
+    renderer = renderer_for
+    WARMUP.times { |i| renderer.render(frames[i % frames.length]) }
+    renderer = renderer_for # fresh renderer: first frame is a full repaint each run
+
+    before = GC.stat(:total_allocated_objects)
+    started = monotonic
+    frames.each { |f| renderer.render(f) }
+    [monotonic - started, GC.stat(:total_allocated_objects) - before]
+  end
+
+  def monotonic
+    Process.clock_gettime(Process::CLOCK_MONOTONIC)
+  end
+
+  def bench(workload, width, height)
+    frames =
+      case workload
+      when :full then 30.times.map { |i| frame(width, height, mutate: :all, seed: i + 1) }
+      when :line then 30.times.map { |i| frame(width, height, mutate: [12], seed: i + 1) }
+      when :animate then ANIMATE_TICKS.times.map { |i| frame(width, height, mutate: (5...10).to_a, seed: i + 1) }
+      end
+
+    seconds, allocations = measure(frames)
+    [seconds * 1000 / frames.length, allocations.to_f / frames.length]
+  end
+
+  def run
+    puts format("%-8s %-8s %12s %16s", "workload", "size", "ms/frame", "allocations/frame")
+    SIZES.each do |width, height|
+      %i[full line animate].each do |workload|
+        ms, allocs = bench(workload, width, height)
+        puts format("%-8s %-8s %12.3f %16.0f", workload, "#{width}x#{height}", ms, allocs)
+      end
+    end
+
+    # The decision gate uses the median tick time, not the mean.
+    renderer = renderer_for
+    frames = ANIMATE_TICKS.times.map { |i| frame(200, 60, mutate: (5...10).to_a, seed: i + 1) }
+    WARMUP.times { |i| renderer.render(frames[i]) }
+    renderer = renderer_for
+    times = frames.map do |f|
+      started = monotonic
+      renderer.render(f)
+      (monotonic - started) * 1000
+    end
+    median = times.sort[frames.length / 2]
+    puts format("\n200x60 animate median: %.3f ms/frame (gate: < 4.0 ms)", median)
+    puts(median < 4.0 ? "GATE PASS: string-frame renderer is fast enough; cell buffer deferred." : "GATE FAIL: cell buffer warranted.")
+  end
+end
+
+RenderBench.run

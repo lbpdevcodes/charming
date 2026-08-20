@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `bin/bench-render`: render-pipeline benchmark (80x24/200x60/400x110 frames;
+  full-change, single-line, and 30fps animate workloads; ms/frame and
+  allocations/frame). Measured 0.007 ms/frame median on the 200x60 animate
+  workload, so the cell-buffer compositor is deferred (see ROADMAP.md).
 - `Charming::Internal::Inflections`: internal string inflection helpers
   (`camelize`, `underscore`, `demodulize`, `deconstantize`, `constantize`,
   `humanize`, `pluralize`) with ActiveSupport-compatible semantics for the

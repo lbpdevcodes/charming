@@ -64,6 +64,10 @@ Close the remaining charm.sh feature gaps that need deeper surgery (Next tier be
 
 - Kitty keyboard protocol (disambiguated modifiers, key-release events) with graceful fallback.
 - Renderer performance: scroll-region optimization and cell-level diffing for list/log-heavy views; render-output caching for static panes.
+  (Deferred on measurement, 2026-08: `bin/bench-render` shows the string-frame
+  Differential renderer at 0.007 ms/frame median on the 200x60 30fps animate
+  workload — far under the 4 ms gate. Revisit only if real apps show render
+  hotspots; the benchmark is the decision harness.)
 - Styled (non-interactive) table/list/tree builders — lipgloss-style declarative rendering with per-cell style functions.
 - Glamour-parity markdown tables: box-drawing borders, `:---`/`---:` column alignment, width capping.
 - Form groups (multi-page wizards) and authored per-binding help text for the help overlay.
