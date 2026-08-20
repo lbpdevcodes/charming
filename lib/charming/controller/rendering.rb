@@ -15,13 +15,29 @@ module Charming
       end
 
       # Wraps *body* (a string) in the controller's configured layout, if any. When no layout is set
-      # the body is returned as-is.
+      # the body is returned as-is. Render artifacts from every view rendered (body first, layout
+      # last) accumulate on the controller for the dispatch to commit.
       def render_with_layout(body)
         rendered = render_body(body)
+        collect_render_artifacts(body)
         layout = self.class.layout
         return rendered unless layout
 
-        render_body(layout_body(layout, body, rendered))
+        layout_view = layout_body(layout, body, rendered)
+        render_body(layout_view).tap { collect_render_artifacts(layout_view) }
+      end
+
+      # Accumulates the render artifacts *body* stashed during its render, if any. Strings
+      # and template-less bodies carry none.
+      def collect_render_artifacts(body)
+        return unless body.respond_to?(:render_artifacts)
+
+        dispatch_render_artifacts.concat(body.render_artifacts)
+      end
+
+      # The render artifacts accumulated during this dispatch, in render order.
+      def dispatch_render_artifacts
+        @dispatch_render_artifacts ||= []
       end
 
       # Builds the layout wrapper for *body* / *rendered* content. String/Symbol layouts are

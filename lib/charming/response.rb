@@ -8,11 +8,15 @@ module Charming
   # *escapes* carries any out-of-band terminal sequences (image transmissions, clipboard writes,
   # notifications, window-title changes) gathered during the dispatch. The Runtime flushes them straight
   # to the backend, bypassing the line-based frame pipeline. It is empty for ordinary responses.
-  Response = Data.define(:kind, :body, :name, :params, :escapes) do
+  #
+  # *artifacts* carries the merged RenderArtifacts (focus slots, mouse targets) from the views
+  # rendered during the dispatch, attached when the response is assigned. The dispatch pipeline
+  # commits them at dispatch exit; nil for navigate/quit responses and renders with no layout.
+  Response = Data.define(:kind, :body, :name, :params, :escapes, :artifacts) do
     # Factory constructing a Render response for displaying *body* text on the current screen. *escapes*
     # is the list of out-of-band sequences gathered during the dispatch (defaults to none).
     def self.render(body, escapes: [])
-      new(kind: :render, body: body, name: nil, params: {}, escapes: escapes)
+      new(kind: :render, body: body, name: nil, params: {}, escapes: escapes, artifacts: nil)
     end
 
     # Factory constructing a NavigateResponse routing to the screen registered under *name*
@@ -24,12 +28,12 @@ module Charming
           "String URL paths were removed. Use `navigate :#{suggestion}` with a screen name from config/routes.rb. See UPGRADING.md."
       end
 
-      new(kind: :navigate, body: "", name: name.to_sym, params: params, escapes: [])
+      new(kind: :navigate, body: "", name: name.to_sym, params: params, escapes: [], artifacts: nil)
     end
 
     # Factory constructing a QuitResponse signalling termination of the top-level event loop.
     def self.quit
-      new(kind: :quit, body: "", name: nil, params: {}, escapes: [])
+      new(kind: :quit, body: "", name: nil, params: {}, escapes: [], artifacts: nil)
     end
 
     # Returns `true` when this response is navigating to another screen.

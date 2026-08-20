@@ -76,6 +76,24 @@ module Charming
       events = keys.map { |key| key.is_a?(String) ? key_event(key) : key }
       Charming::Internal::Terminal::MemoryBackend.new(events: events, width: width, height: height)
     end
+
+    # Renders a view class standalone — no controller needed — and returns a hash with
+    # the painted :frame plus the layout's registration data (:focus_slots,
+    # :mouse_targets). Rendering is pure: registrations only commit when a response
+    # paints, so unit-testing a view means asserting on these artifacts.
+    #
+    #   result = render_view(Home::ShowView, screen: Charming::Screen.new(width: 40, height: 10))
+    #   expect(result[:focus_slots]).to eq([:entries])
+    def render_view(view_class, **assigns)
+      view = view_class.new(**assigns)
+      frame = view.render
+      artifacts = view.render_artifacts
+      {
+        frame: frame,
+        focus_slots: artifacts.last&.focus_slots || [],
+        mouse_targets: artifacts.flat_map(&:mouse_targets)
+      }
+    end
   end
 end
 

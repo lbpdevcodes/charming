@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `Charming::RenderArtifacts`: a view render's registration data (frame,
+  focus slots, mouse targets). `TestHelper#render_view(view_class, **assigns)`
+  renders a view with no controller and returns `{frame:, focus_slots:,
+  mouse_targets:}` for view unit specs.
 - `slot :name { ... }` controller DSL: one declaration site for component
   identity. The factory is `instance_exec`'d against the controller (it can
   read `params`/`state`) and memoized for the screen's lifetime — replacing
@@ -87,6 +91,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Rendering is pure. `View#screen_layout` no longer mutates the controller
+  (focus ring, mouse targets) mid-render; it stashes `RenderArtifacts` on the
+  view. The dispatch pipeline merges them (last `screen_layout` wins for
+  focus; mouse targets concatenate in render order), attaches them to the
+  render response, and commits them once at dispatch exit. A dispatch that
+  raises mid-render commits nothing, so the previous frame's registrations
+  stay live. No app-facing API change.
 - **Breaking:** Setting the response twice in one dispatch now raises
   `Charming::DoubleRenderError` instead of silently keeping the last write.
   Code that called `render` and then `navigate` (or any pair) in one action

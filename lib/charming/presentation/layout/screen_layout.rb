@@ -49,6 +49,13 @@ module Charming
         end
       end
 
+      # Returns the rendered frame plus registration data (focusable pane names, mouse
+      # targets) as RenderArtifacts — the pure-render counterpart to #render that views
+      # use so dispatch, not rendering, commits registrations.
+      def render_with_artifacts
+        RenderArtifacts.new(frame: render, focus_slots: focusable_names, mouse_targets: mouse_targets)
+      end
+
       private
 
       # The screen, background style, the single child, and the list of overlays.

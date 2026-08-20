@@ -28,6 +28,13 @@ module Charming
       ctrl ? ctrl.focused?(slot) : false
     end
 
+    # The RenderArtifacts from every screen_layout call in this view's render, in render
+    # order. Internal — the controller's rendering pipeline and TestHelper#render_view
+    # read them; app code should not.
+    def render_artifacts
+      @render_artifacts ||= []
+    end
+
     private
 
     attr_reader :assigns
@@ -80,11 +87,15 @@ module Charming
     end
 
     # Builds a declarative layout tree for the current terminal screen and renders it.
+    # The layout's registration data (focusable panes, mouse targets) is stashed on the
+    # view as RenderArtifacts — the dispatch pipeline commits them when the response
+    # paints, so rendering never mutates the controller. Several screen_layout calls in
+    # one render accumulate in order.
     def screen_layout(background: nil, &)
       layout = Layout::Builder.build(screen: layout_screen, view: self, background: background, &)
-      register_layout_focus(layout)
-      register_layout_mouse_targets(layout)
-      layout.render
+      artifacts = layout.render_with_artifacts
+      render_artifacts << artifacts
+      artifacts.frame
     end
 
     # Yields the layout's `content` slot — used by view templates to inject their body into a layout wrapper (e.g., sidebar).
@@ -125,18 +136,6 @@ module Charming
 
     def layout_screen
       assigns[:screen] || assigns[:controller]&.screen || Charming::Screen.new(width: 80, height: 24)
-    end
-
-    def register_layout_focus(layout)
-      return unless assigns[:controller]
-
-      assigns[:controller].register_layout_focus(layout.focusable_names)
-    end
-
-    def register_layout_mouse_targets(layout)
-      return unless assigns[:controller]
-
-      assigns[:controller].register_mouse_targets(layout.mouse_targets)
     end
   end
 end

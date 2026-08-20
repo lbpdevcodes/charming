@@ -231,11 +231,34 @@ module Charming
 
     # The single funnel through which every response is assigned. Raises
     # DoubleRenderError when a response was already set during this dispatch —
-    # a second assignment would silently discard the first.
+    # a second assignment would silently discard the first. Render responses carry
+    # the dispatch's merged render artifacts (focus slots, mouse targets) for the
+    # commit at dispatch exit.
     def assign_response(value, attempted)
       raise DoubleRenderError, double_render_message(attempted) if response
 
-      @response = value
+      @response = attach_render_artifacts(value)
+    end
+
+    # Attaches the merged render artifacts to a render response when any view rendered
+    # a layout this dispatch. Non-render responses and layout-less renders carry none.
+    def attach_render_artifacts(value)
+      return value unless value.kind == :render
+      return value if dispatch_render_artifacts.empty?
+
+      value.with(artifacts: RenderArtifacts.merge(dispatch_render_artifacts))
+    end
+
+    # Commits the response's render artifacts: validates focus slots against the slot
+    # registry, defines the layout focus scope, and registers mouse targets. Runs once
+    # per dispatch, at the outermost exit — a dispatch that raises mid-render commits
+    # nothing, so the previous frame's registrations stay live with what's on screen.
+    def commit_render_artifacts
+      artifacts = response&.artifacts
+      return unless artifacts
+
+      register_layout_focus(artifacts.focus_slots)
+      register_mouse_targets(artifacts.mouse_targets)
     end
 
     # Builds the DoubleRenderError message, naming the action, the response
@@ -262,15 +285,17 @@ module Charming
     # between events. Nested dispatches (a key binding calling #dispatch) keep it.
     # The outermost dispatch also clears @response on entry, so a response set outside
     # any dispatch (e.g. in screen_entered) is discarded instead of tripping the
-    # DoubleRenderError guard on the next dispatch's first render.
+    # DoubleRenderError guard on the next dispatch's first render. At the outermost
+    # exit, a rendered response's artifacts commit; an exception skips the commit.
     def with_dispatch_state(event)
       @event = event if event
       @dispatch_depth = @dispatch_depth.to_i + 1
       if @dispatch_depth == 1
         @response = nil
+        dispatch_render_artifacts.clear
         validate_slot_registrations_once
       end
-      yield
+      yield.tap { commit_render_artifacts if @dispatch_depth == 1 }
     ensure
       @dispatch_depth -= 1
       if @dispatch_depth.zero?

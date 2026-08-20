@@ -21,7 +21,8 @@ module Charming
 
       # Stores the named layout panes from the latest render so mouse events can be hit-tested
       # against the same focus slots used by Tab traversal. Kept on the controller instance:
-      # mouse targets describe the latest render, not persistent state.
+      # mouse targets describe the latest render, not persistent state. Internal — called only
+      # from the dispatch pipeline's artifact commit; app code should not call this.
       def register_mouse_targets(targets)
         @mouse_targets = targets
       end
