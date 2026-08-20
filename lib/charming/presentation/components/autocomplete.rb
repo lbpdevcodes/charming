@@ -29,6 +29,14 @@ module Charming
         clamp_selection
       end
 
+      # Replaces the suggestion list and reclamps the selection against the filtered
+      # list. Lets a memoized autocomplete stay fresh: keep the component in a slot
+      # and assign `combo.suggestions = names` before each render.
+      def suggestions=(new_suggestions)
+        @suggestions = Array(new_suggestions).map(&:to_s)
+        clamp_selection
+      end
+
       # The typed text.
       def value
         @input.value

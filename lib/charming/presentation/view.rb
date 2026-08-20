@@ -130,7 +130,7 @@ module Charming
     def register_layout_focus(layout)
       return unless assigns[:controller]
 
-      assigns[:controller].focus.define_layout(layout.focusable_names)
+      assigns[:controller].register_layout_focus(layout.focusable_names)
     end
 
     def register_layout_mouse_targets(layout)

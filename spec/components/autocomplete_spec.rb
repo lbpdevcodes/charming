@@ -66,4 +66,16 @@ RSpec.describe Charming::Components::Autocomplete do
     expect(plain).to include("ru|")
     expect(plain).to include("ruby")
   end
+
+  describe "#suggestions=" do
+    it "replaces the suggestions and clamps the selection" do
+      combo = described_class.new(suggestions: %w[alpha beta gamma], value: "", selected_index: 2)
+
+      combo.suggestions = %w[delta]
+
+      expect(combo.selected_index).to eq(0)
+      expect(Charming::UI::Width.strip_ansi(combo.render)).to include("delta")
+      expect(Charming::UI::Width.strip_ansi(combo.render)).not_to include("alpha")
+    end
+  end
 end

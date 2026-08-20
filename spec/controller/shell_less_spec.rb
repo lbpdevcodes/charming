@@ -11,16 +11,14 @@ RSpec.describe "controllers without the app shell" do
       key "x", :mark
       key "q", :quit
 
+      slot(:viewer) { Charming::Components::Viewport.new(content: "line", height: 1) }
+
       def show
         render "shell-less"
       end
 
       def mark
         render "marked"
-      end
-
-      def viewer
-        Charming::Components::Viewport.new(content: "line", height: 1)
       end
     end
   end

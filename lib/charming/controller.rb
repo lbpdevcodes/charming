@@ -190,19 +190,44 @@ module Charming
       @component_dispatch ||= ComponentDispatch.new(self)
     end
 
-    # Returns the component registered for the focus *slot* — a same-named method on the
-    # controller — or nil. Every dispatch path fetches components through here, so the
-    # slot convention is greppable in one place.
+    # Returns the component registered for the focus *slot*, or nil. Declared slots
+    # (`slot :name { ... }`) resolve first, memoized per controller; undeclared slots
+    # fall back to the same-named method convention. Every dispatch path fetches
+    # components through here, so the slot convention is greppable in one place.
     def component_for(slot)
       assert_loop_thread!(:component_for)
-      return nil unless respond_to?(slot, true)
+      return declared_slot(slot.to_sym) if self.class.slot_definitions.key?(slot.to_sym)
 
-      send(slot)
+      legacy_slot_component(slot)
     end
 
     private
 
     attr_reader :response
+
+    # Returns the memoized component for a declared slot, instance_exec'ing the factory
+    # on first access so it can read params and state. Factories that return nil are
+    # memoized as nil (the key? check distinguishes "not built" from "built as nil").
+    def declared_slot(name)
+      @slots ||= {}
+      return @slots[name] if @slots.key?(name)
+
+      @slots[name] = instance_exec(&self.class.slot_definitions[name])
+    end
+
+    # Resolves an undeclared slot via the legacy same-named-method convention, warning
+    # once per controller class and slot. Returns nil (without warning) when no such
+    # method exists — pane names like :sidebar are slots without components.
+    def legacy_slot_component(name)
+      return nil unless respond_to?(name, true)
+
+      Charming.deprecate(
+        "#{self.class.name || "An anonymous controller"} resolves slot :#{name} via a private method. " \
+          "Declare it instead: `slot :#{name} { ... }`. The convention is removed at 1.0.",
+        category: :"undeclared_slot_#{self.class.name}_#{name}"
+      )
+      send(name)
+    end
 
     # The single funnel through which every response is assigned. Raises
     # DoubleRenderError when a response was already set during this dispatch —
@@ -241,7 +266,10 @@ module Charming
     def with_dispatch_state(event)
       @event = event if event
       @dispatch_depth = @dispatch_depth.to_i + 1
-      @response = nil if @dispatch_depth == 1
+      if @dispatch_depth == 1
+        @response = nil
+        validate_slot_registrations_once
+      end
       yield
     ensure
       @dispatch_depth -= 1

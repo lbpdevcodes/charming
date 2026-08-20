@@ -90,4 +90,16 @@ RSpec.describe Charming::Components::Tree do
     expect(tree.render).to eq("")
     expect(tree.handle_key(key(:enter))).to be_nil
   end
+
+  describe "#nodes=" do
+    it "replaces the root nodes and clamps the cursor into range" do
+      tree = described_class.new(nodes: nodes, cursor_index: 3)
+      expect(tree.current_node).to eq({label: "README.md"})
+
+      tree.nodes = [{label: "only.rb"}]
+
+      expect(tree.nodes).to eq([{label: "only.rb"}])
+      expect(tree.current_node).to eq({label: "only.rb"})
+    end
+  end
 end

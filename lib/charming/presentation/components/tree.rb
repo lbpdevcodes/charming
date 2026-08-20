@@ -23,6 +23,15 @@ module Charming
       # The root node list and the cursor index into the visible-node list.
       attr_reader :nodes, :cursor_index
 
+      # Replaces the root nodes (e.g. after the underlying data changed) and reclamps
+      # the cursor. Expansion state lives in the node hashes, so fresh nodes render
+      # with the expansion they carry. Lets a memoized tree stay fresh: keep the
+      # component in a slot and assign `tree.nodes = rows` before each render.
+      def nodes=(new_nodes)
+        @nodes = new_nodes
+        clamp_cursor
+      end
+
       # *nodes* is the array of root node hashes (mutated in place to track expansion).
       # *height* optionally constrains the visible window.
       def initialize(nodes:, cursor_index: 0, height: nil, keymap: :vim, theme: nil)

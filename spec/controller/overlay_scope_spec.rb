@@ -10,6 +10,8 @@ RSpec.describe "Overlay focus scopes capture keys" do
       key "q", :quit, scope: :global
       on_cancel :help_overlay, :close_help
 
+      slot(:help_overlay) { Charming::Components::HelpOverlay.new(bindings: {"q" => "Quit"}) }
+
       def show
         render "help: #{session.fetch(:help_open, false)} composed: #{session.fetch(:composed, false)}"
       end
@@ -23,10 +25,6 @@ RSpec.describe "Overlay focus scopes capture keys" do
         session[:help_open] = true
         focus.push_scope([:help_overlay], origin: :modal)
         show
-      end
-
-      def help_overlay
-        Charming::Components::HelpOverlay.new(bindings: {"q" => "Quit"})
       end
 
       def close_help

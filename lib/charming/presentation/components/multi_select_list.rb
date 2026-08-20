@@ -20,6 +20,13 @@ module Charming
         @max_selections = max_selections
       end
 
+      # Replaces the items, reclamps the highlight (List#items=), and drops checks
+      # that fall outside the new list.
+      def items=(new_items)
+        super
+        @selected_indices = selected_indices.select { |index| index < items.length }
+      end
+
       # Space toggles the highlighted item, Enter submits the checked items.
       def handle_key(event)
         case Charming.key_of(event)

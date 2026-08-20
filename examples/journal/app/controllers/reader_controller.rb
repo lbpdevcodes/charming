@@ -14,6 +14,19 @@ module Journal
     on_submit :delete_confirm, :delete_entry
     on_cancel :delete_confirm, :cancel_delete
 
+    # The markdown body in a scrollable viewport (j/k/arrows/page keys via focus),
+    # memoized for the screen's lifetime. Built from current_entry, not @entry:
+    # slot factories run on key dispatch paths where before_action hasn't run.
+    slot(:body) do
+      Charming::Components::Viewport.new(
+        content: rendered_markdown,
+        width: [screen.width - 32, 40].max,
+        height: [screen.height - 12, 5].max,
+        offset: entry_state.scroll_offset,
+        wrap: true
+      )
+    end
+
     def show
       entry_state.scroll_offset = body.offset
       render :show, entry: @entry, body_pane: body, palette: command_palette,
@@ -58,19 +71,6 @@ module Journal
     def cancel_delete
       close_delete_confirm
       show
-    end
-
-    # The markdown body in a scrollable viewport (j/k/arrows/page keys via focus).
-    # Built from current_entry, not @entry: focus-slot methods are invoked on key
-    # dispatch paths where before_action hasn't run.
-    def body
-      @body ||= Charming::Components::Viewport.new(
-        content: rendered_markdown,
-        width: [screen.width - 32, 40].max,
-        height: [screen.height - 12, 5].max,
-        offset: entry_state.scroll_offset,
-        wrap: true
-      )
     end
 
     def status_hints

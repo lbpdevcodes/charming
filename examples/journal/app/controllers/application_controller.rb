@@ -15,6 +15,10 @@ module Journal
 
     timer :toast_expiry, every: 0.5, action: :expire_toast
 
+    # The keyboard-shortcut overlay, memoized per screen (content is derived from the
+    # controller class, so it never changes mid-screen).
+    slot(:help_overlay) { Charming::Components::HelpOverlay.for_controller(self.class, theme: theme) }
+
     command "Entries" do
       navigate :root
     end
@@ -62,10 +66,6 @@ module Journal
       session[:help_open] = true
       focus.push_scope([:help_overlay], origin: :modal)
       render_default_action
-    end
-
-    def help_overlay
-      Charming::Components::HelpOverlay.for_controller(self.class, theme: theme)
     end
 
     def close_help

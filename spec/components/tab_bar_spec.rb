@@ -61,4 +61,15 @@ RSpec.describe Charming::Components::TabBar do
     expect(bar.handle_key(key(:enter))).to be_nil
     expect(bar.render).to eq("")
   end
+
+  describe "#tabs=" do
+    it "replaces the tabs and clamps the selection" do
+      bar = described_class.new(tabs: %w[one two three], selected_index: 2)
+
+      bar.tabs = %w[only]
+
+      expect(bar.tabs).to eq(%w[only])
+      expect(bar.selected_index).to eq(0)
+    end
+  end
 end

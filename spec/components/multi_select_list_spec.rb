@@ -56,4 +56,22 @@ RSpec.describe Charming::Components::MultiSelectList do
     list = described_class.new(items: items, selected_indices: [0, 99])
     expect(list.selected_items).to eq(%w[ruby])
   end
+
+  describe "#items=" do
+    it "replaces items, keeps in-range checks, and drops out-of-range ones" do
+      list = described_class.new(items: items, selected_indices: [0, 2])
+
+      list.items = %w[alpha beta]
+
+      expect(list.selected_items).to eq(%w[alpha])
+    end
+
+    it "keeps the highlight valid when the new list is shorter" do
+      list = described_class.new(items: items, selected_index: 2)
+
+      list.items = %w[alpha]
+
+      expect(list.selected_index).to eq(0)
+    end
+  end
 end

@@ -12,6 +12,20 @@ module Journal
     on_submit :delete_confirm, :delete_entry
     on_cancel :delete_confirm, :cancel_delete
 
+    # The selectable entry list, memoized for the screen's lifetime so j/k selection
+    # survives across events. `show` refreshes the items each render — the component
+    # holds the interaction state, the items always reflect the database.
+    # entries_state mirrors the selection so it survives navigation.
+    slot(:entries) do
+      Charming::Components::List.new(
+        items: Entry.recent_first.to_a,
+        selected_index: entries_state.selected_index,
+        height: [screen.height - 10, 3].max,
+        label: :list_label.to_proc,
+        theme: theme
+      )
+    end
+
     def show
       entries.items = Entry.recent_first.to_a
       entries_state.selected_index = entries.selected_index
@@ -64,20 +78,6 @@ module Journal
     # Enter on the list opens the selected entry.
     def open_entry(entry)
       navigate :entry, id: entry.id
-    end
-
-    # The selectable entry list, memoized so j/k selection survives across events.
-    # `show` refreshes the items each render — the component holds the interaction
-    # state, the items always reflect the database. entries_state mirrors the
-    # selection so it can be restored after navigating away and back.
-    def entries
-      @entries ||= Charming::Components::List.new(
-        items: Entry.recent_first.to_a,
-        selected_index: entries_state.selected_index,
-        height: [screen.height - 10, 3].max,
-        label: :list_label.to_proc,
-        theme: theme
-      )
     end
 
     def status_hints

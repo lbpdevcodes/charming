@@ -91,6 +91,22 @@ module Charming
         @layout = layout_class
       end
 
+      # Declares the component for the named focus *slot*. The factory block is
+      # instance_exec'd against the controller (it can read params and state) and the
+      # result is memoized for the controller's lifetime — this replaces the
+      # hand-rolled `@query ||= ...` private-method convention. Also defines a private
+      # reader with the slot's name returning the memoized component.
+      def slot(name, &factory)
+        slot_definitions[name.to_sym] = factory
+        define_method(name) { component_for(name) }
+        private name
+      end
+
+      # Hash of declared slots (name => factory block), inherited from superclass.
+      def slot_definitions
+        @slot_definitions ||= superclass.respond_to?(:slot_definitions) ? superclass.slot_definitions.dup : {}
+      end
+
       # Hash of registered key bindings (symbol key name => action method name), inherited from
       # superclass controllers.
       def key_bindings
@@ -102,14 +118,26 @@ module Charming
         @key_binding_scopes ||= superclass.respond_to?(:key_binding_scopes) ? superclass.key_binding_scopes.dup : {}
       end
 
-      # Defines the named focus slots cycled by Tab/Shift+Tab traversal.
+      # Defines the named focus slots cycled by Tab/Shift+Tab traversal. Accepts any
+      # names, including layout panes without components (e.g. :sidebar). Called with
+      # no arguments — or never called — the ring defaults to the declared slots in
+      # declaration order.
       def focus_ring(*slots)
-        @focus_ring_slots = slots
+        @focus_ring_slots = slots unless slots.empty?
       end
 
-      # Returns the focus ring slots, inherited from superclass when undefined.
+      # Returns the focus ring slots: the explicit `focus_ring` declaration from the
+      # nearest declaring ancestor when one exists, otherwise the declared slots in
+      # declaration order.
       def focus_ring_slots
-        @focus_ring_slots ||= superclass.respond_to?(:focus_ring_slots) ? superclass.focus_ring_slots.dup : []
+        (explicit_focus_ring || slot_definitions.keys).dup
+      end
+
+      # True when the controller (or an ancestor) declared an explicit focus ring —
+      # explicit rings may name component-less layout panes, so they are not filtered
+      # to components the way the declared-slot default is.
+      def explicit_focus_ring?
+        !explicit_focus_ring.nil?
       end
 
       # Hash of timer name => TimerBinding, inherited from superclass when undefined.
@@ -134,6 +162,14 @@ module Charming
       end
 
       private
+
+      # Returns the nearest explicit `focus_ring` declaration walking the superclass
+      # chain, or nil when none was made.
+      def explicit_focus_ring
+        return @focus_ring_slots if instance_variable_defined?(:@focus_ring_slots)
+
+        superclass.respond_to?(:explicit_focus_ring, true) ? superclass.send(:explicit_focus_ring) : nil
+      end
 
       # Validates that *scope* is :content or :global; otherwise raises ArgumentError.
       def validate_key_scope(scope)

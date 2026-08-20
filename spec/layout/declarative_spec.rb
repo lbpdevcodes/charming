@@ -163,7 +163,9 @@ RSpec.describe Charming::Layout::Builder do
   end
 
   it "registers focusable panes and applies focused pane styling" do
-    controller_class = Class.new(Charming::Controller)
+    controller_class = Class.new(Charming::Controller) do
+      focus_ring :left, :right
+    end
     stub_const("LayoutFocusSpecController", controller_class)
     controller = LayoutFocusSpecController.new(application: Charming::Application.new)
     view_class = Class.new(Charming::View) do

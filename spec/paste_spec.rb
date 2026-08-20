@@ -35,12 +35,10 @@ RSpec.describe "Bracketed paste" do
       controller_class = Class.new(Charming::Controller) do
         focus_ring :query
 
+        slot(:query) { Charming::Components::TextInput.new(value: session.fetch(:query, "")) }
+
         def show
           render "query: #{query.value}"
-        end
-
-        def query
-          @query ||= Charming::Components::TextInput.new(value: session.fetch(:query, ""))
         end
 
         def query_submitted(value)

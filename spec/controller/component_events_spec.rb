@@ -15,12 +15,13 @@ RSpec.describe "component event dispatch" do
   let(:application) { Charming::Application.new }
 
   def build_controller(slot:, result:, &class_body)
+    slot_name = slot
     stub_component_class = StubComponent
     Class.new(Charming::Controller) do
-      focus_ring slot
+      focus_ring slot_name
 
       define_method(:show) { render "base" }
-      define_method(slot) { stub_component_class.new(result) }
+      slot(slot_name) { stub_component_class.new(result) }
       class_eval(&class_body) if class_body
     end
   end

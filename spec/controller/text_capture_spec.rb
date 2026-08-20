@@ -95,11 +95,9 @@ RSpec.describe "Text-capturing components and key dispatch priority" do
 
       focus_ring :pager, :sidebar
 
-      def show = render("ok")
+      slot(:pager) { Charming::Components::Viewport.new(content: "line", height: 1) }
 
-      def pager
-        Charming::Components::Viewport.new(content: "line", height: 1)
-      end
+      def show = render("ok")
     end
     stub_const("PagerSpecController", viewer_class)
     viewer = PagerSpecController.new(application: application)

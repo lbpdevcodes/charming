@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `slot :name { ... }` controller DSL: one declaration site for component
+  identity. The factory is `instance_exec`'d against the controller (it can
+  read `params`/`state`) and memoized for the screen's lifetime — replacing
+  the `@query ||= ...` method idiom. Also defines a private reader named for
+  the slot. With no explicit `focus_ring`, Tab cycles declared slots in
+  declaration order; an explicit `focus_ring` still wins and may name
+  component-less layout panes.
+- `Charming::UnknownSlot`: raised when a rendered layout names a focusable
+  pane nothing declares (no `slot`, no `focus_ring` entry, no same-named
+  method), and for `on_submit`/`on_select`/`on_cancel` registrations
+  referencing an undeclared slot — validated lazily at first dispatch so
+  class-body order doesn't matter. Development/test raise; production logs.
+- Data-refresh setters with selection clamping for the remaining memoizable
+  pickers: `Tree#nodes=`, `TabBar#tabs=`, `Autocomplete#suggestions=`, and
+  `MultiSelectList#items=` (which also drops out-of-range checks). Same
+  two-halves idiom as `List#items=`/`Table#rows=`.
 - `run_task(name, with: {...})`: task inputs travel in an explicit,
   deep-frozen hash. The block receives a `Charming::Tasks::Context` —
   `ctx[:key]` reads inputs, `ctx.report(...)` streams progress. Mutating a
@@ -53,6 +69,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Deprecated
 
+- Resolving focus slots through same-named private methods
+  (`def query; @query ||= ...; end`). Declare the component instead:
+  `slot :query { ... }`. The convention still works but warns once per
+  controller and slot (category `:undeclared_slot`). Scheduled for removal at
+  1.0. Exception: form-builder methods (`def entry_form; form(:entry) ...; end`)
+  and per-dispatch modal builders stay methods — they capture values that
+  change between dispatches.
 - `component_state` (still works, session-backed). Persistent controllers make
   it unnecessary: memoize components in ivars
   (`@query ||= Components::TextInput.new(...)`) for screen-lifetime state.

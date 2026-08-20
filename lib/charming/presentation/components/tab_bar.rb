@@ -24,6 +24,14 @@ module Charming
       # The tab labels and the index of the active tab.
       attr_reader :tabs, :selected_index
 
+      # Replaces the tab labels and reclamps the active tab. Lets a memoized tab bar
+      # stay fresh: keep the component in a slot and assign `bar.tabs = names` before
+      # each render.
+      def tabs=(new_tabs)
+        @tabs = Array(new_tabs).map(&:to_s)
+        @selected_index = @tabs.empty? ? 0 : selected_index.clamp(0, @tabs.length - 1)
+      end
+
       # *tabs* is the array of tab labels. *selected_index* is the active tab (default 0).
       # *separator* spaces the tabs apart.
       def initialize(tabs:, selected_index: 0, separator: "  ", keymap: :vim, theme: nil)
