@@ -48,6 +48,7 @@ lib/charming/             # framework source
     viewport.rb           # scrollable content area
     spinner.rb
   generators/             # `charming new` / `charming generate` scaffold code
+  shell/                  # opt-in app shell: sidebar.rb + palette.rb (included by generated apps)
   internal/
     timer_control.rb      # runtime surface for start_timer/stop_timer from controllers
     terminal/

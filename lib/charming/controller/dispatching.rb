@@ -76,9 +76,8 @@ module Charming
       # free-typed text (see Component#captures_text?).
       def focused_component_captures_text?
         slot = focus.current
-        return false unless slot && respond_to?(slot, true)
+        component = slot && component_for(slot)
 
-        component = send(slot)
         component.respond_to?(:captures_text?) && component.captures_text?
       end
     end

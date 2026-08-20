@@ -5,6 +5,8 @@ RSpec.describe "Text-capturing components and key dispatch priority" do
 
   let(:controller_class) do
     Class.new(Charming::Controller) do
+      include Charming::Shell::Sidebar
+
       focus_ring :note_form, :sidebar
 
       key "q", :quit, scope: :global
@@ -89,6 +91,8 @@ RSpec.describe "Text-capturing components and key dispatch priority" do
 
   it "still cycles the ring on tab when the focused component doesn't handle it" do
     viewer_class = Class.new(Charming::Controller) do
+      include Charming::Shell::Sidebar
+
       focus_ring :pager, :sidebar
 
       def show = render("ok")

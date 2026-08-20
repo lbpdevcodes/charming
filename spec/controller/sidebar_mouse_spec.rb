@@ -7,6 +7,8 @@ RSpec.describe "Sidebar mouse navigation" do
 
   before do
     controller_class = Class.new(Charming::Controller) do
+      include Charming::Shell::Sidebar
+
       focus_ring :sidebar, :content
 
       def show = render("home")

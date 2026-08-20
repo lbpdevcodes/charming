@@ -2,6 +2,9 @@
 
 module Journal
   class ApplicationController < Charming::Controller
+    include Charming::Shell::Sidebar
+    include Charming::Shell::Palette
+
     layout Layouts::ApplicationLayout
     focus_ring :sidebar, :content
 

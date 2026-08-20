@@ -127,6 +127,10 @@ RSpec.describe Charming::CLI do
       expect(output.string).to include("insert chrome app/controllers/application_controller.rb")
       expect(output.string).to include("insert themes lib/chrome_tui/application.rb")
 
+      generated_controller = File.read(File.join(app_root, "app/controllers/application_controller.rb"))
+      expect(generated_controller).to include("include Charming::Shell::Sidebar")
+      expect(generated_controller).to include("include Charming::Shell::Palette")
+
       described_class.new(out: output, pwd: app_root).call(%w[g screen dashboard])
 
       require File.join(app_root, "lib/chrome_tui")

@@ -551,6 +551,9 @@ RSpec.describe Charming::Controller do
 
   it "opens a command palette from registered commands" do
     controller = Class.new(described_class) do
+      include Charming::Shell::Sidebar
+      include Charming::Shell::Palette
+
       command "Quit", :quit
 
       def show
@@ -565,6 +568,9 @@ RSpec.describe Charming::Controller do
 
   it "stores primitive command palette state in the session" do
     controller = Class.new(described_class) do
+      include Charming::Shell::Sidebar
+      include Charming::Shell::Palette
+
       command "Quit", :quit
 
       def show
@@ -580,6 +586,9 @@ RSpec.describe Charming::Controller do
 
   it "preserves command palette input across fresh controller instances" do
     controller = Class.new(described_class) do
+      include Charming::Shell::Sidebar
+      include Charming::Shell::Palette
+
       command "Open", :show
 
       def show
@@ -599,6 +608,9 @@ RSpec.describe Charming::Controller do
 
   it "preserves command palette selection across fresh controller instances" do
     controller = Class.new(described_class) do
+      include Charming::Shell::Sidebar
+      include Charming::Shell::Palette
+
       command "Open", :show
       command "Run", :show
 
@@ -616,6 +628,9 @@ RSpec.describe Charming::Controller do
 
   it "replaces command palette state when opening the theme palette from a command" do
     controller = Class.new(described_class) do
+      include Charming::Shell::Sidebar
+      include Charming::Shell::Palette
+
       command "Theme", :open_theme_palette
 
       def show
@@ -632,6 +647,9 @@ RSpec.describe Charming::Controller do
 
   it "dispatches keys to an open command palette before normal bindings" do
     controller = Class.new(described_class) do
+      include Charming::Shell::Sidebar
+      include Charming::Shell::Palette
+
       key "q", :ignored
       command "Quit", :quit
 
@@ -652,6 +670,9 @@ RSpec.describe Charming::Controller do
 
   it "preserves navigation responses from command palette actions" do
     controller = Class.new(described_class) do
+      include Charming::Shell::Sidebar
+      include Charming::Shell::Palette
+
       command "Settings", :settings
 
       def show
@@ -673,6 +694,9 @@ RSpec.describe Charming::Controller do
 
   it "executes command blocks in the controller context" do
     controller = Class.new(described_class) do
+      include Charming::Shell::Sidebar
+      include Charming::Shell::Palette
+
       command "Settings" do
         navigate :settings
       end
@@ -691,6 +715,9 @@ RSpec.describe Charming::Controller do
 
   it "re-renders the default action after palette input" do
     controller = Class.new(described_class) do
+      include Charming::Shell::Sidebar
+      include Charming::Shell::Palette
+
       command "Open", :open
       def show = render(command_palette.render)
     end
@@ -871,6 +898,9 @@ RSpec.describe Charming::Controller do
 
     def focus_controller(component_klass, ring: %i[widget], extra: nil, name: "FocusRingController")
       klass = Class.new(described_class) do
+        include Charming::Shell::Sidebar
+        include Charming::Shell::Palette
+
         focus_ring(*ring)
 
         def show
@@ -1201,6 +1231,8 @@ RSpec.describe Charming::Controller do
 
     it "uses the active route when computing the current sidebar index" do
       controller_class = Class.new(described_class) do
+        include Charming::Shell::Sidebar
+
         def show = render("show")
         def settings = render("settings")
       end
@@ -1220,6 +1252,8 @@ RSpec.describe Charming::Controller do
 
     it "allows controllers to override sidebar routes" do
       controller_class = Class.new(described_class) do
+        include Charming::Shell::Sidebar
+
         def show = render("show")
 
         def sidebar_routes
@@ -1239,7 +1273,11 @@ RSpec.describe Charming::Controller do
     end
 
     it "does not track sidebar/content focus when no focus_ring is declared" do
-      controller_class = Class.new(described_class) { def show = render("ok") }
+      controller_class = Class.new(described_class) do
+        include Charming::Shell::Sidebar
+
+        def show = render("ok")
+      end
       stub_const("NoFocusRingController", controller_class)
 
       controller_class.new(application: application).focus_content

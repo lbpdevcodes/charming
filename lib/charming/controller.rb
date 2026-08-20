@@ -22,9 +22,6 @@ module Charming
     include Rendering
     include SessionState
     include FocusManagement
-    include SidebarNavigation
-    include CommandPalette
-    include ComponentDispatching
     include Dispatching
     include Terminal
     include Timers
@@ -146,13 +143,6 @@ module Charming
       application.logger
     end
 
-    # Opens the theme picker (a CommandPalette populated with the registered themes) and renders.
-    def open_theme_palette
-      session[:command_palette] = command_palette_state(:themes)
-      focus.push_scope([:command_palette], origin: :command_palette)
-      render_default_action
-    end
-
     # Navigates to the screen registered under *name* in config/routes.rb, passing
     # *params* through to the target controller (e.g. `navigate :project, id: project.id`).
     def navigate(name, **params)
@@ -162,6 +152,21 @@ module Charming
     # Exits the application — sets a quit response that terminates the event loop.
     def quit
       @response = Response.quit
+    end
+
+    # The component-dispatch collaborator: forwards key/mouse/paste events to focused
+    # components and translates their results into controller action calls.
+    def component_dispatch
+      @component_dispatch ||= ComponentDispatch.new(self)
+    end
+
+    # Returns the component registered for the focus *slot* — a same-named method on the
+    # controller — or nil. Every dispatch path fetches components through here, so the
+    # slot convention is greppable in one place.
+    def component_for(slot)
+      return nil unless respond_to?(slot, true)
+
+      send(slot)
     end
 
     private
@@ -201,26 +206,27 @@ module Charming
     # Forwards the paste event to the focused component and dispatches its result.
     def paste_response
       slot = focus.current
-      return nil unless slot && respond_to?(slot, true)
-
-      component = send(slot)
-      return nil unless component.respond_to?(:handle_paste)
+      component = slot && component_for(slot)
+      return nil unless component&.respond_to?(:handle_paste)
 
       result = component.handle_paste(event)
       return nil if result.nil?
 
-      dispatch_component_result(slot, result)
+      component_dispatch.dispatch_component_result(slot, result)
       response
     end
 
-    # Routes the mouse event: palette first, then sidebar, then named panes/components.
+    # Routes the mouse event: palette first (when the app includes the shell palette),
+    # then sidebar (likewise), then named panes/components.
     def mouse_response
-      return dispatch_command_palette_mouse if command_palette_open?
+      return dispatch_command_palette_mouse if respond_to?(:command_palette_open?) && command_palette_open?
 
-      sidebar_response = dispatch_sidebar_mouse
-      return sidebar_response if sidebar_response
+      if respond_to?(:dispatch_sidebar_mouse, true)
+        sidebar_response = dispatch_sidebar_mouse
+        return sidebar_response if sidebar_response
+      end
 
-      dispatch_component_mouse
+      component_dispatch.dispatch_component_mouse
     end
   end
 end

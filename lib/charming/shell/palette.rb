@@ -1,16 +1,35 @@
 # frozen_string_literal: true
 
 module Charming
-  class Controller
-    # Command palette helpers mixed into Controller. Opens/closes the palette, builds the
-    # palette from registered command bindings or theme list, and routes key/mouse events
-    # through it. Supports both the standard command palette (:commands) and the theme picker
-    # (:themes) via a discriminated `session[:command_palette]` state hash.
-    #
-    # Palette state lives in the session, not on the controller: the palette is app-global —
-    # a command can navigate to another screen, and the open/closed state must survive the
-    # controller swap that navigation causes.
-    module CommandPalette
+  # Shell::Palette is the opt-in app-shell command palette: the `command` class DSL,
+  # open/close helpers, the theme picker, and key/mouse routing while the palette is
+  # open. Generated apps include it in ApplicationController when generated with the
+  # sidebar layout (`include Charming::Shell::Palette`).
+  #
+  # Palette state lives in the session, not on the controller: the palette is app-global —
+  # a command can navigate to another screen, and the open/closed state must survive the
+  # controller swap that navigation causes.
+  module Shell
+    module Palette
+      # Wires the class-level `command` DSL into the including controller.
+      def self.included(base)
+        base.extend(ClassMethods)
+      end
+
+      # Class-level palette DSL: `command` entries and their inherited registry.
+      module ClassMethods
+        # Adds a CommandPalette entry with the given *label*. *action* is a method name to send on
+        # the controller, or a block to instance_exec when selected.
+        def command(label, action = nil, &block)
+          command_bindings << Components::CommandPalette::Command.new(label: label, value: block || action)
+        end
+
+        # Array of registered command palette entries, inherited from superclass when undefined.
+        def command_bindings
+          @command_bindings ||= superclass.respond_to?(:command_bindings) ? superclass.command_bindings.dup : []
+        end
+      end
+
       # Opens the command palette populated with the controller's `command_bindings`. Pushes
       # a focus scope so subsequent keys are routed to the palette.
       def open_command_palette
@@ -34,6 +53,13 @@ module Charming
       # Returns the active CommandPalette component, or nil when the palette is closed.
       def command_palette
         build_command_palette_from_state(session[:command_palette]) if command_palette_open?
+      end
+
+      # Opens the theme picker (a CommandPalette populated with the registered themes) and renders.
+      def open_theme_palette
+        session[:command_palette] = command_palette_state(:themes)
+        focus.push_scope([:command_palette], origin: :command_palette)
+        render_default_action
       end
 
       private

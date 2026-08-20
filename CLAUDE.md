@@ -38,7 +38,8 @@ Application → Router → Controller → ApplicationState → View → Componen
 The framework source under `lib/charming/` is organized as:
 
 - `application.rb`, `router.rb` — Rails-style app + route DSL.
-- `controller.rb` — dispatch, `key`/`command`/`timer` bindings, `state(...)`, `render`/`navigate`/`quit`.
+- `controller.rb` — dispatch, `key`/`timer` bindings, `state(...)`, `render`/`navigate`/`quit`.
+- `shell/` — opt-in app shell: `Shell::Sidebar` (route sidebar) and `Shell::Palette` (`command` DSL + command palette). Generated apps include them in `ApplicationController` via the `layout` generator; the kernel controller does not.
 - `application_state.rb` — `ActiveModel::Model` + `Attributes`; the only place persistent TUI state lives, stored in `session` and accessed via `Controller#state(name, klass, **attrs)`.
 - `runtime.rb` — main event loop. Reads events from the backend, dispatches key/timer/task events to the controller (or open components), passes responses to the renderer.
 - `screen.rb`, `response.rb`, `events/` — terminal dimensions, `RenderResponse`/`NavigateResponse`/`QuitResponse`, `KeyEvent`/`ResizeEvent`/`TimerEvent`/`TaskEvent`/`MouseEvent`.

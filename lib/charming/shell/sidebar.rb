@@ -1,14 +1,13 @@
 # frozen_string_literal: true
 
 module Charming
-  class Controller
-    # Sidebar-navigation helpers mixed into Controller. Tracks the sidebar's current route index,
-    # routes j/k/enter/tab keys when the sidebar is focused, and exposes `sidebar_focused?` for views.
-    #
-    # Sidebar/content focus is driven entirely by the controller's Focus object. Controllers
-    # that want Tab-driven sidebar navigation declare `focus_ring :sidebar, :content` (generated
-    # apps do); without those slots in the ring, `focus_sidebar`/`focus_content` are no-ops.
-    module SidebarNavigation
+  # Shell::Sidebar is the opt-in app-shell sidebar: route listing, sidebar/content focus
+  # split, j/k/enter navigation, and mouse clicks on route rows. Generated apps include it
+  # in ApplicationController when generated with the sidebar layout
+  # (`include Charming::Shell::Sidebar`). Controllers that want Tab-driven sidebar
+  # navigation declare `focus_ring :sidebar, :content`.
+  module Shell
+    module Sidebar
       # Moves focus to the sidebar slot and remembers the highlighted route.
       def focus_sidebar
         focus.focus(:sidebar)

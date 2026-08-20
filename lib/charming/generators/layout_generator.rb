@@ -99,6 +99,9 @@ module Charming
 
       def controller_chrome
         class_body_block(<<~RUBY)
+          include Charming::Shell::Sidebar
+          include Charming::Shell::Palette
+
           focus_ring :sidebar, :content
 
           key "ctrl+p", :open_command_palette, scope: :global

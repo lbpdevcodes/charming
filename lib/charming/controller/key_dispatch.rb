@@ -42,7 +42,7 @@ module Charming
       attr_reader :controller
 
       def palette_open?
-        controller.command_palette_open?
+        controller.respond_to?(:command_palette_open?) && controller.command_palette_open?
       end
 
       def palette_response
@@ -75,12 +75,12 @@ module Charming
 
       # An overlay consumes the key whether or not the component handled it.
       def overlay_response
-        controller.send(:dispatch_to_focused_component)
+        controller.component_dispatch.dispatch_to_focused_component
         response
       end
 
       def sidebar_focused?
-        controller.sidebar_focused?
+        controller.respond_to?(:sidebar_focused?) && controller.sidebar_focused?
       end
 
       def sidebar_response
@@ -98,11 +98,11 @@ module Charming
       end
 
       def component_claimed?
-        controller.send(:dispatch_to_focused_component) == :handled
+        controller.component_dispatch.dispatch_to_focused_component == :handled
       end
 
       def ring_claimed?
-        controller.send(:dispatch_tab_traversal) == :handled
+        controller.component_dispatch.dispatch_tab_traversal == :handled
       end
 
       def response

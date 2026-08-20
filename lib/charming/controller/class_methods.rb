@@ -16,12 +16,6 @@ module Charming
         key_binding_scopes[key_name] = normalized_scope
       end
 
-      # Adds a CommandPalette entry with the given *label*. *action* is a method name to send on
-      # the controller, or a block to instance_exec when selected.
-      def command(label, action = nil, &block)
-        command_bindings << Components::CommandPalette::Command.new(label: label, value: block || action)
-      end
-
       # Declares a timer that fires every *every* seconds and dispatches *action* on the controller.
       # The runtime builds a TimerEvent and routes it to the active controller's dispatch_timer.
       # Timers run from boot by default; declare `autostart: false` to schedule one only when an
@@ -114,11 +108,6 @@ module Charming
       # Returns the focus ring slots, inherited from superclass when undefined.
       def focus_ring_slots
         @focus_ring_slots ||= superclass.respond_to?(:focus_ring_slots) ? superclass.focus_ring_slots.dup : []
-      end
-
-      # Array of registered command palette entries, inherited from superclass when undefined.
-      def command_bindings
-        @command_bindings ||= superclass.respond_to?(:command_bindings) ? superclass.command_bindings.dup : []
       end
 
       # Hash of timer name => TimerBinding, inherited from superclass when undefined.

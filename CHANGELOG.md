@@ -34,6 +34,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Breaking:** The sidebar and command palette moved out of the controller
+  kernel into an opt-in app shell. Include `Charming::Shell::Sidebar` and
+  `Charming::Shell::Palette` in your `ApplicationController` to keep them;
+  the `charming generate layout` generator adds the includes. The `command`
+  class DSL moves with the palette module. Shell-less controllers handle keys,
+  mouse, and tab traversal unchanged. Migration: see UPGRADING.md.
+- Component dispatch is a collaborator (`Controller#component_dispatch`,
+  mirroring `KeyDispatch`), and every dispatch path fetches slot components
+  through one method, `Controller#component_for(slot)`.
 - **Breaking:** Controllers are persistent per screen. The Runtime constructs
   one instance at route entry and dispatches every event at it —
   `dispatch_key(event)`, `dispatch_mouse(event)`, etc. take the event as an
