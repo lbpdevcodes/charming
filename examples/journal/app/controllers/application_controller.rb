@@ -8,6 +8,7 @@ module Journal
     key "ctrl+p", :open_command_palette, scope: :global
     key "?", :open_help, scope: :global
     key "q", :quit, scope: :global
+    on_cancel :help_overlay, :close_help
 
     timer :toast_expiry, every: 0.5, action: :expire_toast
 
@@ -64,7 +65,7 @@ module Journal
       Charming::Components::HelpOverlay.for_controller(self.class, theme: theme)
     end
 
-    def help_overlay_cancelled
+    def close_help
       session.delete(:help_open)
       focus.pop_scope
       render_default_action

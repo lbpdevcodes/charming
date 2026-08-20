@@ -54,6 +54,24 @@ module Charming
         task_progress_bindings[name.to_sym] = TaskBinding.new(name: name.to_sym, action: action)
       end
 
+      # Declares the action dispatched when the component in *slot* submits a value
+      # (`[:submitted, value]` from its `handle_key`). The action receives the value.
+      def on_submit(slot, action)
+        component_event_bindings[[slot.to_sym, :submitted]] = action.to_sym
+      end
+
+      # Declares the action dispatched when the component in *slot* selects an item
+      # (`[:selected, value]` from its `handle_key`). The action receives the value.
+      def on_select(slot, action)
+        component_event_bindings[[slot.to_sym, :selected]] = action.to_sym
+      end
+
+      # Declares the action dispatched when the component in *slot* is cancelled
+      # (`:cancelled` from its `handle_key`). The action receives no arguments.
+      def on_cancel(slot, action)
+        component_event_bindings[[slot.to_sym, :cancelled]] = action.to_sym
+      end
+
       # Sets the action that the controller should auto-render after a non-rendering action runs.
       # Defaults to :show when unset.
       def auto_render(action = :show)
@@ -116,6 +134,12 @@ module Charming
       # Hash of task name => TaskBinding for progress handlers, inherited from superclass.
       def task_progress_bindings
         @task_progress_bindings ||= superclass.respond_to?(:task_progress_bindings) ? superclass.task_progress_bindings.dup : {}
+      end
+
+      # Hash of [slot, event] => action for component-event registrations made with
+      # `on_submit`/`on_select`/`on_cancel`, inherited from superclass when undefined.
+      def component_event_bindings
+        @component_event_bindings ||= superclass.respond_to?(:component_event_bindings) ? superclass.component_event_bindings.dup : {}
       end
 
       private

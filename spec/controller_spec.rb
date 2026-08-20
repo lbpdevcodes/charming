@@ -739,12 +739,13 @@ RSpec.describe Charming::Controller do
   it "dispatches submitted form results to focused component hooks" do
     controller = Class.new(described_class) do
       focus_ring :signup_form
+      on_submit :signup_form, :signup
 
       def show
         render signup_form.render
       end
 
-      def signup_form_submitted(values)
+      def signup(values)
         render "submitted #{values[:name]}"
       end
 
@@ -766,12 +767,13 @@ RSpec.describe Charming::Controller do
   it "dispatches cancelled form results to focused component hooks" do
     controller = Class.new(described_class) do
       focus_ring :signup_form
+      on_cancel :signup_form, :cancel_signup
 
       def show
         render signup_form.render
       end
 
-      def signup_form_cancelled
+      def cancel_signup
         render "cancelled"
       end
 

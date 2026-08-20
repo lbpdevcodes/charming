@@ -11,6 +11,8 @@ module Journal
     key "f", :toggle_favorite
     key "d", :request_delete
     key "escape", :back_to_list
+    on_submit :delete_confirm, :delete_entry
+    on_cancel :delete_confirm, :cancel_delete
 
     def show
       entry_state.scroll_offset = body.offset
@@ -44,7 +46,7 @@ module Journal
       Journal::DeleteConfirm.new(entry_title: current_entry.title, theme: theme)
     end
 
-    def delete_confirm_submitted(_value)
+    def delete_entry(_value)
       entry = current_entry
       title = entry.title
       entry.destroy!
@@ -53,7 +55,7 @@ module Journal
       navigate :root
     end
 
-    def delete_confirm_cancelled
+    def cancel_delete
       close_delete_confirm
       show
     end

@@ -14,6 +14,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `humanize`, `pluralize`) with ActiveSupport-compatible semantics for the
   inputs Charming produces. `pluralize` covers a deliberate subset of English
   rules; exotic words may need a generated migration renamed by hand.
+- `on_submit :slot, :action`, `on_select :slot, :action`, and
+  `on_cancel :slot, :action` class DSL for declaring component-event handlers
+  explicitly. Registrations inherit to subclasses like key bindings.
+- `Charming::UnhandledComponentEvent`: raised when a component emits a result
+  no handler covers, in development and test. Production logs a warning and
+  keeps the old default-render fallback.
+
+### Deprecated
+
+- The auto-discovered `<slot>_submitted` / `<slot>_selected` /
+  `<slot>_cancelled` hook convention. It still works but warns once per call
+  site with the `on_*` declaration to add. Scheduled for removal at 1.0.
 
 ### Changed
 

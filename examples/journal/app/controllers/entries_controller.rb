@@ -8,6 +8,9 @@ module Journal
     key "f", :toggle_favorite
 
     key "d", :request_delete
+    on_select :entries, :open_entry
+    on_submit :delete_confirm, :delete_entry
+    on_cancel :delete_confirm, :cancel_delete
 
     def show
       entries_state.selected_index = entries.selected_index
@@ -44,7 +47,7 @@ module Journal
       Journal::DeleteConfirm.new(entry_title: pending_delete.title, theme: theme)
     end
 
-    def delete_confirm_submitted(_value)
+    def delete_entry(_value)
       entry = pending_delete
       entry&.destroy!
       close_delete_confirm
@@ -52,13 +55,13 @@ module Journal
       show
     end
 
-    def delete_confirm_cancelled
+    def cancel_delete
       close_delete_confirm
       show
     end
 
     # Enter on the list opens the selected entry.
-    def entries_selected(entry)
+    def open_entry(entry)
       navigate :entry, id: entry.id
     end
 

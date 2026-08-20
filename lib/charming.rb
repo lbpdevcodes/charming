@@ -82,6 +82,16 @@ module Charming
 
     :"#{(ordered_modifiers + [key]).join("+")}"
   end
+
+  # Emits a deprecation warning once per process per *category*, prefixed
+  # "[charming deprecation]". Warnings go to stderr.
+  def self.deprecate(message, category:)
+    @deprecation_emitted ||= {}
+    return if @deprecation_emitted[category]
+
+    @deprecation_emitted[category] = true
+    warn("[charming deprecation] #{message}")
+  end
 end
 
 Charming::Templates.register ".tui.erb", Charming::Templates::ErbHandler

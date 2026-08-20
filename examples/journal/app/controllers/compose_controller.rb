@@ -5,25 +5,27 @@ module Journal
     focus_ring :entry_form, :sidebar
 
     before_action :prepare_form_state
+    on_submit :entry_form, :save_entry
+    on_cancel :entry_form, :cancel_edit
 
     def show
       render :show, form: entry_form, editing: editing_entry, palette: command_palette
     end
 
-    # `/entries/:id/edit` lands here; same screen, form pre-seeded from the record.
+    # `:edit_entry` lands here; same screen, form pre-seeded from the record.
     def edit
       show
     end
 
     # Ctrl+S (or Enter on the last field) with valid values lands here.
-    def entry_form_submitted(values)
+    def save_entry(values)
       entry = persist_entry(values)
       reset_form_state
       show_toast(editing_entry ? "Updated \"#{entry.title}\"" : "Saved \"#{entry.title}\"")
       navigate :entry, id: entry.id
     end
 
-    def entry_form_cancelled
+    def cancel_edit
       reset_form_state
       editing_entry ? navigate(:entry, id: editing_entry.id) : navigate(:root)
     end

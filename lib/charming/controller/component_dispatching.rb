@@ -53,12 +53,42 @@ module Charming
         nil
       end
 
-      # Returns `[action, arguments]` for the `<slot>_<suffix>` controller hook if defined, or nil.
+      # Returns `[action, arguments]` for the component event in *slot* with *suffix*
+      # (:submitted, :selected, or :cancelled). Resolution order: an explicit
+      # `on_submit`/`on_select`/`on_cancel` registration, then the legacy
+      # `<slot>_<suffix>` hook (with a one-time deprecation warning). With neither,
+      # development/test raise UnhandledComponentEvent; production logs a warning and
+      # returns nil, which falls back to the default render.
       def component_action(slot, suffix, *arguments)
-        action = :"#{slot}_#{suffix}"
-        return unless respond_to?(action, true)
+        action = self.class.component_event_bindings[[slot.to_sym, suffix]]
+        return [action, arguments] if action
 
-        [action, arguments]
+        legacy_action = :"#{slot}_#{suffix}"
+        if respond_to?(legacy_action, true)
+          Charming.deprecate(
+            "#{self.class.name || "an anonymous controller"}##{legacy_action} uses the auto-discovered hook. " \
+            "Declare it explicitly: `#{component_event_dsl(suffix)} :#{slot}, :#{legacy_action}`.",
+            category: :"component_event_#{self.class.name}_#{slot}_#{suffix}"
+          )
+          return [legacy_action, arguments]
+        end
+
+        unhandled_component_event(slot, suffix)
+        nil
+      end
+
+      # Raises UnhandledComponentEvent outside production; logs a warning in production.
+      def unhandled_component_event(slot, suffix)
+        message = "Unhandled component event: #{self.class.name || "anonymous controller"} has no handler for " \
+          ":#{slot} :#{suffix}. Declare one: `#{component_event_dsl(suffix)} :#{slot}, :your_action`."
+        raise UnhandledComponentEvent, message unless Charming.env.production?
+
+        logger.warn(message)
+      end
+
+      # The class-level DSL name that declares a handler for *suffix*.
+      def component_event_dsl(suffix)
+        {submitted: "on_submit", selected: "on_select", cancelled: "on_cancel"}.fetch(suffix)
       end
 
       # Handles Tab/Shift+Tab by cycling through the focus ring. Returns :handled after rendering.
