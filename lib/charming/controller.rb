@@ -2,8 +2,9 @@
 
 module Charming
   # Controller is the base class for all controller implementations in a Charming application.
-  # It provides the action dispatch pipeline, key/command/timer/task bindings, sidebar navigation,
-  # command palette management, and view rendering with layout composition.
+  # It provides the action dispatch pipeline, key/timer/task bindings, component-event
+  # declarations, and view rendering with layout composition. The sidebar and command
+  # palette are opt-in: see Charming::Shell::Sidebar and Charming::Shell::Palette.
   #
   # Controllers are persistent per screen: the Runtime constructs one instance when a route is
   # entered and dispatches every event for that screen at it, so instance variables live for the

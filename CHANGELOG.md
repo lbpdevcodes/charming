@@ -24,6 +24,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Charming::UnhandledComponentEvent`: raised when a component emits a result
   no handler covers, in development and test. Production logs a warning and
   keeps the old default-render fallback.
+- `screen_entered` / `screen_exited` controller lifecycle hooks: they bracket
+  the persistent controller instance's life. Override them to start and stop
+  per-screen resources.
+- `Charming::Shell::Sidebar` and `Charming::Shell::Palette`: the opt-in app
+  shell (sidebar navigation, command palette, `command` DSL).
+- `reset_form(:name)`: clears a form's controller-held draft state.
+- `Controller#component_dispatch` and `Controller#component_for(slot)`: the
+  component-dispatch collaborator and the single slot-lookup point.
 
 ### Deprecated
 

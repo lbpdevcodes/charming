@@ -186,7 +186,7 @@ page and pass the values when you navigate.
 Before:
 
 ```ruby
-def entries_selected(entry)
+def open_entry(entry)
   navigate_to "/entries/#{entry.id}"
 end
 ```
@@ -194,7 +194,7 @@ end
 After:
 
 ```ruby
-def entries_selected(entry)
+def open_entry(entry)
   navigate :entry, id: entry.id
 end
 ```

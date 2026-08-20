@@ -2,8 +2,10 @@
 
 module Charming
   class Controller
-    # DSL for declaring controller-level event bindings and configuration: keys, commands,
-    # timers, task handlers, the auto-rendered action, layout wrapper, and focus ring.
+    # DSL for declaring controller-level event bindings and configuration: keys,
+    # timers, task handlers, component-event handlers, the auto-rendered action,
+    # layout wrapper, and focus ring. (The `command` palette DSL lives in the
+    # opt-in app shell: Charming::Shell::Palette.)
     # Mixed into Controller as class methods; also exposed for tests and shared base controllers.
     module ClassMethods
       # Binds a key press to a controller action. *name* is the normalized key symbol (e.g., "up",
