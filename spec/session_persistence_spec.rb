@@ -119,4 +119,97 @@ RSpec.describe "Session persistence" do
       expect(JSON.parse(File.read(path))).to include("visited" => true)
     end
   end
+
+  describe "state object persistence" do
+    it "round-trips persist-marked attributes and resets unmarked ones to defaults" do
+      Dir.mktmpdir do |dir|
+        path = File.join(dir, "session.json")
+        app_class = app_class_with(path)
+        state_class = Class.new(Charming::ApplicationState) do
+          attribute :count, :integer, default: 0
+          attribute :draft, :string, default: ""
+
+          persist :count
+
+          def self.name
+            "CounterState"
+          end
+        end
+        stub_const("CounterState", state_class)
+
+        app = app_class.new
+        app.session[:states] = {counter: CounterState.new(count: 5, draft: "unsent")}
+        app.save_session
+
+        restored = app_class.new
+        restored_state = restored.session[:states][:counter]
+        expect(restored_state).to be_a(CounterState)
+        expect(restored_state.count).to eq(5)
+        expect(restored_state.draft).to eq("")
+      end
+    end
+
+    it "drops undeclared state classes with a one-time warning naming the fix" do
+      Charming.instance_variable_set(:@deprecation_emitted, {})
+      Dir.mktmpdir do |dir|
+        path = File.join(dir, "session.json")
+        app_class = app_class_with(path)
+        undeclared = Class.new(Charming::ApplicationState) do
+          attribute :count, :integer, default: 0
+
+          def self.name
+            "UndeclaredState"
+          end
+        end
+        stub_const("UndeclaredState", undeclared)
+
+        app = app_class.new
+        app.session[:states] = {counter: UndeclaredState.new(count: 5)}
+        expect { app.save_session }.to output(/UndeclaredState.*persist :attr/m).to_stderr
+        expect { app.save_session }.not_to output.to_stderr
+
+        restored = app_class.new
+        expect(restored.session[:states]).to be_nil
+      end
+    end
+
+    it "warns once when dropping a non-JSON-safe direct session value" do
+      Charming.instance_variable_set(:@deprecation_emitted, {})
+      Dir.mktmpdir do |dir|
+        path = File.join(dir, "session.json")
+        app_class = app_class_with(path)
+
+        app = app_class.new
+        app.session[:callback] = proc {}
+        expect { app.save_session }.to output(/session\[:callback\]/).to_stderr
+        expect { app.save_session }.not_to output.to_stderr
+      end
+    end
+
+    it "boots with fresh state when the session file references a renamed class or attribute" do
+      Dir.mktmpdir do |dir|
+        path = File.join(dir, "session.json")
+        File.write(path, JSON.generate(states: {
+          counter: {class: "RenamedAwayState", attributes: {count: 5}},
+          other: {class: "StillHereState", attributes: {renamed_attr: 1}}
+        }))
+        stub_const("StillHereState", Class.new(Charming::ApplicationState) do
+          attribute :count, :integer, default: 0
+
+          def self.name
+            "StillHereState"
+          end
+        end)
+
+        log = StringIO.new
+        app_class = app_class_with(path)
+        app_class.logger(Logger.new(log))
+        app = app_class.new
+
+        expect(app.session[:states]).to eq({})
+        expect(log.string).to match(/RenamedAwayState.*starting fresh/)
+        expect(log.string).to match(/renamed_attr|UnknownAttributeError/)
+      end
+    end
+  end
 end

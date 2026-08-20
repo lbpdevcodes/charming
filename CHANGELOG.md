@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `ApplicationState.persist :attr, ...`: explicit attribute persistence for
+  `persist_session`. State objects serialize as their class name plus the
+  marked (JSON-safe) attributes and re-instantiate on boot; unmarked
+  attributes reset to defaults. A session file referencing a renamed class or
+  attribute logs a warning and starts that state fresh — boot never crashes.
 - `Charming::RenderArtifacts`: a view render's registration data (frame,
   focus slots, mouse targets). `TestHelper#render_view(view_class, **assigns)`
   renders a view with no controller and returns `{frame:, focus_slots:,
@@ -91,6 +96,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `save_session` never drops data silently anymore. State classes with no
+  `persist` declarations and non-JSON-safe raw session values warn once per
+  key/class (category `:session_drop`), naming the fix. At 1.0, undeclared
+  means not persisted, with no warning. Previously state objects were skipped
+  without any signal.
 - Rendering is pure. `View#screen_layout` no longer mutates the controller
   (focus ring, mouse targets) mid-render; it stashes `RenderArtifacts` on the
   view. The dispatch pipeline merges them (last `screen_layout` wins for

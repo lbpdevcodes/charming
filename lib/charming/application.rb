@@ -93,9 +93,10 @@ module Charming
       end
 
       # Opts into session persistence: the session hash is serialized as JSON to *to*
-      # when the app quits and reloaded on boot. Only JSON-safe values survive the
-      # round-trip (hash keys come back as symbols); non-serializable entries (state
-      # objects, procs) are skipped with a warning in the log.
+      # when the app quits and reloaded on boot. JSON-safe values survive (hash keys
+      # come back as symbols; symbol values come back as strings). State objects
+      # persist only their `persist`-marked attributes; anything else dropped warns
+      # once per key (category :session_drop).
       def persist_session(to:)
         @session_path = to
       end
@@ -179,9 +180,10 @@ module Charming
       @session = load_session
     end
 
-    # Serializes the session to the configured `persist_session` path. Entries that
-    # don't survive a JSON round-trip (state objects, procs, focus scopes) are skipped.
-    # No-op when persistence isn't configured. Called by the Runtime on exit.
+    # Serializes the session to the configured `persist_session` path. State objects
+    # persist their `persist`-marked attributes only; other attributes reinitialize to
+    # defaults on next boot. Dropped entries warn once per key. No-op when persistence
+    # isn't configured. Called by the Runtime on exit.
     def save_session
       path = self.class.session_path
       return unless path
@@ -221,14 +223,34 @@ module Charming
     private
 
     # Loads the persisted session JSON (symbolizing keys), or {} when absent/invalid.
+    # Serialized state objects are re-instantiated from their declared class and
+    # persisted attributes; unknown classes and stale attribute sets degrade to a
+    # logged warning plus fresh state — a stale session file never crashes boot.
     def load_session
       path = self.class.session_path
       return {} unless path && File.exist?(path)
 
-      JSON.parse(File.read(path), symbolize_names: true)
+      data = JSON.parse(File.read(path), symbolize_names: true)
+      data[:states] = restore_states(data[:states]) if data[:states].is_a?(Hash)
+      data
     rescue JSON::ParserError => e
       logger.warn("session not restored: #{e.message}")
       {}
+    end
+
+    # Re-instantiates serialized state objects; entries that fail (renamed class,
+    # changed attributes) are skipped with a warning.
+    def restore_states(serialized)
+      serialized.filter_map { |name, payload| restore_state(name, payload) }.to_h
+    end
+
+    # Restores one state object from its serialized payload, or nil on any mismatch.
+    def restore_state(name, payload)
+      klass = Object.const_get(payload[:class].to_s)
+      [name, klass.new(**payload[:attributes].to_h)]
+    rescue => e
+      logger.warn("session state #{name.inspect} not restored (#{e.class}: #{e.message}); starting fresh")
+      nil
     end
 
     # Framework-internal session keys that must not be persisted: their values carry
@@ -238,11 +260,65 @@ module Charming
     INTERNAL_SESSION_KEYS = %i[focus_state command_palette].freeze
 
     # The subset of session entries that survive a JSON round-trip: nil, booleans,
-    # numbers, strings, symbols, and arrays/hashes of those. State objects, procs,
-    # framework-internal keys, and other rich values are skipped (hash keys come back
-    # as symbols via symbolize_names; symbol *values* come back as strings).
+    # numbers, strings, symbols, and arrays/hashes of those — plus state objects with
+    # `persist`-marked attributes, serialized under :states as
+    # {name => {class:, attributes:}}. Procs and other rich values are dropped with a
+    # one-time :session_drop warning per key (hash keys come back as symbols via
+    # symbolize_names; symbol *values* come back as strings).
     def serializable_session
-      session.except(*INTERNAL_SESSION_KEYS).select { |_key, value| json_safe?(value) }
+      plain = session.except(:states, *INTERNAL_SESSION_KEYS)
+      safe = plain.select { |_key, value| json_safe?(value) }
+      (plain.keys - safe.keys).each do |key|
+        warn_session_drop(key,
+          "session[:#{key}]: the value is not JSON-safe. Keep only strings, numbers, " \
+          "booleans, nil, symbols, and arrays/hashes of those in the session.")
+      end
+
+      states = serializable_states
+      states.empty? ? safe : safe.merge(states: states)
+    end
+
+    # Serializes session[:states] entries: classes with `persist` declarations keep
+    # their marked (JSON-safe) attributes; undeclared classes are dropped with a
+    # one-time :session_drop warning naming the `persist` declaration to add.
+    def serializable_states
+      states = session[:states]
+      return {} unless states
+
+      states.filter_map { |name, object| serialize_state(name, object) }.to_h
+    end
+
+    # Serializes one state object, or nil (with a warning) when its class declares no
+    # persisted attributes.
+    def serialize_state(name, object)
+      klass = object.class
+      unless klass.respond_to?(:persisted?) && klass.persisted?
+        warn_session_drop(name,
+          "#{klass.name || klass.inspect} (session[:states][:#{name}]) declares no persisted attributes. " \
+          "Declare what to keep: `persist :attr, ...` on #{klass.name || "the state class"}.")
+        return nil
+      end
+
+      [name, {class: klass.name, attributes: persisted_attributes_for(object)}]
+    end
+
+    # The JSON-safe subset of a state object's persisted attributes; non-safe values
+    # are dropped with a per-attribute warning.
+    def persisted_attributes_for(object)
+      object.class.persisted_attribute_names.filter_map do |attribute|
+        value = object.public_send(attribute)
+        next [attribute, value] if json_safe?(value)
+
+        warn_session_drop(attribute,
+          "#{object.class.name}##{attribute} is not JSON-safe. Keep only strings, numbers, " \
+          "booleans, nil, and arrays/hashes of those in persisted attributes.")
+        nil
+      end.to_h
+    end
+
+    # Warns once per key/class that a session entry was dropped, naming the fix.
+    def warn_session_drop(category_key, detail)
+      Charming.deprecate("save_session dropped #{detail}", category: :"session_drop_#{category_key}")
     end
 
     def json_safe?(value)
