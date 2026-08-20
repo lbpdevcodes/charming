@@ -80,13 +80,10 @@ RSpec.describe Charming::Internal::Terminal::Adapter do
 
       stub_const(
         "AdapterSpecScreen",
-        Class.new do
-          def self.width = 120
-          def self.height = 50
+        Class.new(StringIO) do
+          def winsize = [50, 120] # IO#winsize reports [rows, columns]
         end
       )
-
-      stub_const("TTY::Screen", AdapterSpecScreen)
     end
 
     let(:width) { 120 }
@@ -95,7 +92,7 @@ RSpec.describe Charming::Internal::Terminal::Adapter do
     let(:adapter) do
       Charming::Internal::Terminal::TTYBackend.new(
         input: StringIO.new,
-        output: StringIO.new,
+        output: AdapterSpecScreen.new,
         reader: AdapterSpecReader.new(keys: {"q" => "q"}, keypresses: ["q"]),
         cursor: AdapterSpecCursor
       )

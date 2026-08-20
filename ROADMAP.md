@@ -74,6 +74,12 @@ Close the remaining charm.sh feature gaps that need deeper surgery (Next tier be
 - Drag lifecycle polish: press/drag/release state machine, double-click detection.
 - ANSI-preserving word wrap (styles spanning wrapped lines).
 - Runtime alt-screen/inline mode toggle.
+- Internal terminal input reader to replace tty-reader (escape-sequence read
+  loop, bracketed paste, modifier decoding). tty-cursor/tty-screen were
+  replaced by `Internal::Terminal::Cursor`/`Size` in the hardening round;
+  tty-reader is the real workhorse, so replacing it is gated on a
+  terminal-matrix test plan (Ghostty, kitty, WezTerm, Alacritty, Terminal.app,
+  tmux) proving input parity.
 
 ## Later
 

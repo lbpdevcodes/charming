@@ -1,12 +1,11 @@
 # frozen_string_literal: true
 
-require "tty-table"
-
 module Charming
   module Components
     # Table renders tabular data with a header row, a selected row highlight, and keyboard
-    # navigation. Mouse clicks within the body area also select rows. The table is rendered
-    # via tty-table and the selected row is overlaid with reverse-video ANSI styling.
+    # navigation. Mouse clicks within the body area also select rows. The grid is drawn
+    # with Charming's own width/border machinery (square border chars plus junctions);
+    # the selected row is overlaid with reverse-video ANSI styling.
     class Table < Component
       include KeyboardHandler
 
@@ -103,15 +102,56 @@ module Charming
       def render
         return "(empty table)" if header.empty? && rows.empty?
 
-        normalized = rows.map { |row| normalize_row(row) }
-        lines = TTY::Table.new(header: sort_marked_header, rows: normalized)
-          .render(:unicode)
-          .lines(chomp: true)
-
-        compact_layout(lines)
+        body = rows.map { |row| normalize_row(row) }
+        columns = [header.length, *body.map(&:length)].max
+        widths = column_widths(body, columns)
+        lines = [border_line(widths, grid.top_left, grid_top_junction, grid.top_right)]
+        lines << grid_line(marked_header_row(columns), widths) unless header.empty?
+        window = body[viewport_start, visible_row_count] || []
+        window.each_with_index do |cells, index|
+          line = grid_line(cells, widths)
+          lines << (((viewport_start + index) == selected_index) ? theme.selected.render(line) : line)
+        end
+        lines << border_line(widths, grid.bottom_left, grid_bottom_junction, grid.bottom_right)
+        lines.join("\n")
       end
 
       private
+
+      # The square border set the grid is drawn with.
+      def grid
+        UI::Border.fetch(:square)
+      end
+
+      # Column junction characters for the grid's top and bottom borders.
+      def grid_top_junction = "┬"
+
+      def grid_bottom_junction = "┴"
+
+      # The display width of each column: the widest cell or header label, measured
+      # with ANSI-aware display width so wide characters pad correctly.
+      def column_widths(body, columns)
+        lines = header.empty? ? body : [sort_marked_header, *body]
+        Array.new(columns) do |column|
+          UI::Width.widest(lines.map { |cells| cells[column].to_s })
+        end
+      end
+
+      # The header row padded out to *columns* cells (short rows render empty cells).
+      def marked_header_row(columns)
+        sort_marked_header + Array.new([columns - header.length, 0].max, "")
+      end
+
+      # One body/header line: cells padded to column width, joined by verticals.
+      def grid_line(cells, widths)
+        padded = widths.each_with_index.map { |width, index| UI::Width.pad_to(cells[index].to_s, width) }
+        "#{grid.vertical}#{padded.join(grid.vertical)}#{grid.vertical}"
+      end
+
+      # A top or bottom border line across the column widths.
+      def border_line(widths, left, junction, right)
+        "#{left}#{widths.map { |width| grid.horizontal * width }.join(junction)}#{right}"
+      end
 
       # Coerces a *row* (Hash / String / Array) into a flat cell array matching the header.
       # Excess cells are merged into the last column with a space separator.
@@ -126,23 +166,6 @@ module Charming
         kept = cells.first(header.length - 1)
         merged = cells[(header.length - 1)..].join(" ")
         kept + [merged]
-      end
-
-      # Applies the selected-row highlight, windows the body to the configured height,
-      # and trims unused body rows below the actual row count.
-      def compact_layout(lines)
-        return lines.join("\n") if lines.length < 4
-
-        top, header_line, _separator, *rest = lines
-        body = rest.first(rows.length)
-        bottom = rest[rows.length]
-
-        window = body[viewport_start, visible_row_count] || []
-        highlighted = window.each_with_index.map do |line, index|
-          ((viewport_start + index) == selected_index) ? theme.selected.render(line) : line
-        end
-
-        [top, header_line, *highlighted, bottom].compact.join("\n")
       end
 
       # The top body row of the visible window (0 when no height is set), keeping the

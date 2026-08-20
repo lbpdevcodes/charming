@@ -224,6 +224,52 @@ RSpec.describe Charming::Components::Table do
       output = table.render
       expect(output).to include("Alice")
     end
+
+    it "renders the exact unicode grid (characterizes the tty-table replacement)" do
+      table = described_class.new(header: %w[Name Age], rows: [["Ada", 36], ["Grace", 41]])
+
+      lines = table.render.lines(chomp: true).map { |line| Charming::UI::Width.strip_ansi(line) }
+
+      expect(lines).to eq([
+        "┌─────┬───┐",
+        "│Name │Age│",
+        "│Ada  │36 │",
+        "│Grace│41 │",
+        "└─────┴───┘"
+      ])
+    end
+
+    it "pads wide-character cells by display width" do
+      table = described_class.new(header: ["N"], rows: [["日本"]])
+
+      lines = table.render.lines(chomp: true).map { |line| Charming::UI::Width.strip_ansi(line) }
+
+      expect(lines).to eq(["┌────┐", "│N   │", "│日本│", "└────┘"])
+    end
+
+    it "pads short rows with empty cells" do
+      table = described_class.new(header: %w[Name Age], rows: [["Ada"]])
+
+      lines = table.render.lines(chomp: true).map { |line| Charming::UI::Width.strip_ansi(line) }
+
+      expect(lines).to include("│Ada │   │")
+    end
+
+    it "renders the header and borders when there are no rows" do
+      table = described_class.new(header: %w[Name Age], rows: [])
+
+      lines = table.render.lines(chomp: true).map { |line| Charming::UI::Width.strip_ansi(line) }
+
+      expect(lines).to eq(["┌────┬───┐", "│Name│Age│", "└────┴───┘"])
+    end
+
+    it "renders rows without a header line when the header is empty" do
+      table = described_class.new(header: [], rows: [["a", "bb"]])
+
+      lines = table.render.lines(chomp: true).map { |line| Charming::UI::Width.strip_ansi(line) }
+
+      expect(lines).to eq(["┌─┬──┐", "│a│bb│", "└─┴──┘"])
+    end
   end
 
   describe "#render selection highlighting" do

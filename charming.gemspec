@@ -28,12 +28,9 @@ Gem::Specification.new do |spec|
   spec.add_dependency "commonmarker", "~> 2.0"
   spec.add_dependency "logger", "~> 1.7"
   spec.add_dependency "rouge", "~> 5.0"
-  spec.add_dependency "tty-cursor", "~> 0.7"
-  spec.add_dependency "zeitwerk", "~> 2.6"
-  spec.add_dependency "tty-table", "~> 0.12"
   spec.add_dependency "tty-reader", "~> 0.9"
-  spec.add_dependency "tty-screen", "~> 0.8"
   spec.add_dependency "unicode-display_width", "~> 2.6"
+  spec.add_dependency "zeitwerk", "~> 2.6"
 
   # Database support is opt-in: apps generated with `--database sqlite3` (or that run
   # `charming db:install`) declare activerecord + sqlite3 in their own gemspec.

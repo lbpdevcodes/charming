@@ -1,16 +1,16 @@
 # frozen_string_literal: true
 
-require "tty-cursor"
+require "io/console"
 require "tty-reader"
-require "tty-screen"
 
 module Charming
   module Internal
     module Terminal
       # TTYBackend is the production terminal backend. It reads key and mouse events from
       # a TTY::Reader, normalizes them via KeyNormalizer and MouseParser, and writes output
-      # frames using TTY::Cursor and TTY::Screen. It also installs SIGWINCH and SIGINFO
-      # handlers so the runtime can react to terminal resize and focus changes.
+      # frames using Terminal::Cursor sequences and IO#winsize for dimensions. It also
+      # installs SIGWINCH and SIGINFO handlers so the runtime can react to terminal resize
+      # and focus changes.
       class TTYBackend
         include Adapter
 
@@ -37,8 +37,9 @@ module Charming
 
         # *input* and *output* default to `$stdin`/`$stdout` for normal terminal use;
         # tests can inject IO objects. *reader* is a TTY::Reader instance (created from
-        # *input*/*output* when nil). *cursor* is the TTY::Cursor class used for cursor control.
-        def initialize(input: $stdin, output: $stdout, reader: nil, cursor: TTY::Cursor)
+        # *input*/*output* when nil). *cursor* is the Terminal::Cursor module used for
+        # cursor control sequences.
+        def initialize(input: $stdin, output: $stdout, reader: nil, cursor: Cursor)
           @input = input
           @output = output
           @reader = reader || TTY::Reader.new(input: input, output: output)
@@ -274,8 +275,9 @@ module Charming
           write_control(@cursor.move_to(column - 1, row - 1))
         end
 
-        # Returns the current terminal dimensions as [width, height] via TTY::Screen.
-        def size = [TTY::Screen.width, TTY::Screen.height]
+        # Returns the current terminal dimensions as [width, height]: IO#winsize on the
+        # output/input streams, then COLUMNS/LINES, then 80x24.
+        def size = Size.measure(@output, @input)
 
         private
 

@@ -156,6 +156,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- The `tty-table`, `tty-cursor`, and `tty-screen` runtime dependencies.
+  `Components::Table` now draws its grid with Charming's own width/border
+  machinery (pixel-compatible on the documented frames; short rows are padded
+  to full width, and header-only or empty-header tables render instead of
+  raising). Cursor sequences moved to `Charming::Internal::Terminal::Cursor`
+  (asserted byte-for-byte) and size detection to
+  `Charming::Internal::Terminal::Size` (IO#winsize, then COLUMNS/LINES, then
+  80x24). `tty-cursor`/`tty-screen` linger in the lockfile only as
+  tty-reader's own transitive dependencies; Charming no longer loads them.
+  tty-reader stays — replacing the raw-input workhorse is gated on a
+  terminal-matrix test plan (see ROADMAP.md). No app-facing API changes.
 - The direct `activesupport` runtime dependency. `activemodel` remains and
   brings activesupport transitively. `Charming.env` now returns an internal
   `EnvInquirer` (same predicate API: `Charming.env.development?` etc.).
