@@ -19,7 +19,7 @@ module Journal
     end
 
     def edit_entry
-      navigate_to "/entries/#{@entry.id}/edit"
+      navigate :edit_entry, id: @entry.id
     end
 
     def toggle_favorite
@@ -29,7 +29,7 @@ module Journal
     end
 
     def back_to_list
-      navigate_to "/"
+      navigate :root
     end
 
     def request_delete
@@ -50,7 +50,7 @@ module Journal
       entry.destroy!
       close_delete_confirm
       show_toast("Deleted \"#{title}\"", kind: :warn)
-      navigate_to "/"
+      navigate :root
     end
 
     def delete_confirm_cancelled

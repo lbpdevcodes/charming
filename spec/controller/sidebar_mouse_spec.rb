@@ -18,7 +18,7 @@ RSpec.describe "Sidebar mouse navigation" do
     stub_const("SidebarMouseSpecApp", app_class)
     app_class.routes do
       root "sidebar_mouse_spec#show"
-      screen "/settings", to: "sidebar_mouse_spec#settings", title: "Settings"
+      screen :settings, "sidebar_mouse_spec#settings", title: "Settings"
     end
   end
 
@@ -42,7 +42,7 @@ RSpec.describe "Sidebar mouse navigation" do
     response = controller_for(click(3, 5)).dispatch_mouse
 
     expect(response.navigate?).to be true
-    expect(response.path).to eq("/settings")
+    expect(response.name).to eq(:settings)
   end
 
   it "focuses the sidebar when clicking non-row sidebar space" do

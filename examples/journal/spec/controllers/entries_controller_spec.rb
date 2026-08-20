@@ -22,14 +22,14 @@ RSpec.describe Journal::EntriesController do
   it "navigates to compose on n" do
     build_controller(described_class, app: app).dispatch(:show)
     response = press(described_class, "n", app: app)
-    expect(response).to navigate_to("/compose")
+    expect(response).to navigate_to(:compose)
   end
 
   it "opens the selected entry on enter" do
     build_controller(described_class, app: app).dispatch(:show)
     newest = Journal::Entry.recent_first.first
     response = press(described_class, "enter", app: app)
-    expect(response).to navigate_to("/entries/#{newest.id}")
+    expect(response).to navigate_to(:entry, id: newest.id)
   end
 
   it "toggles favorite with a toast" do
@@ -58,7 +58,7 @@ RSpec.describe Journal::EntriesController do
   it "swallows other keys while the delete modal is open" do
     build_controller(described_class, app: app).dispatch(:show)
     response = press_sequence(described_class, %w[d n], app: app)
-    expect(response).not_to navigate_to("/compose")
+    expect(response).not_to navigate_to(:compose)
     expect(Journal::Entry.count).to eq(2)
   end
 

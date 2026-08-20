@@ -389,14 +389,14 @@ RSpec.describe Charming::CLI do
         'require "screen_tui"'
       )
       expect(File.read(File.join(app_root, "config/routes.rb"))).to include(
-        'screen "/settings", to: "settings#show"'
+        'screen :settings, "settings#show"'
       )
       expect(File.read(File.join(app_root, "app/controllers/application_controller.rb"))).to include(
         'command "Settings" do'
       )
 
       require File.join(app_root, "lib/screen_tui")
-      expect(ScreenTui::Application.routes.resolve("/settings").controller_class).to eq(
+      expect(ScreenTui::Application.routes.resolve(:settings).controller_class).to eq(
         ScreenTui::SettingsController
       )
 
@@ -436,7 +436,7 @@ RSpec.describe Charming::CLI do
 
       routes = File.read(File.join(app_root, "config/routes.rb"))
       application_controller = File.read(File.join(app_root, "app/controllers/application_controller.rb"))
-      expect(routes.scan('screen "/settings", to: "settings#show"').size).to eq(1)
+      expect(routes.scan('screen :settings, "settings#show"').size).to eq(1)
       expect(application_controller.scan('command "Settings" do').size).to eq(1)
     end
   end

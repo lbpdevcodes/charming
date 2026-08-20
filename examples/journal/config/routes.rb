@@ -2,8 +2,8 @@
 
 Journal::Application.routes do
   root "entries#show", title: "Entries"
-  screen "/compose", to: "compose#show", title: "Compose"
-  screen "/stats", to: "stats#show", title: "Stats"
-  screen "/entries/:id", to: "reader#show", title: "Entry"
-  screen "/entries/:id/edit", to: "compose#edit", title: "Edit"
+  screen :compose, "compose#show", title: "Compose"
+  screen :stats, "stats#show", title: "Stats"
+  screen :entry, "reader#show", title: "Entry"
+  screen :edit_entry, "compose#edit", title: "Edit"
 end

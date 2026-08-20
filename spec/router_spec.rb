@@ -5,18 +5,29 @@ RSpec.describe Charming::Router do
     stub_const("RouterSpecController", Class.new(Charming::Controller))
   end
 
-  it "resolves Rails-like controller actions" do
+  it "resolves the root screen by its reserved name" do
     router = described_class.new
 
     router.draw do
       root "router_spec#show"
     end
 
-    route = router.resolve("/")
+    route = router.resolve(:root)
 
+    expect(route.name).to eq(:root)
     expect(route.controller_class).to eq(RouterSpecController)
     expect(route.action).to eq(:show)
     expect(route.params).to eq({})
+  end
+
+  it "resolves named screens with a default action" do
+    router = described_class.new
+
+    router.draw do
+      screen :projects, "router_spec"
+    end
+
+    expect(router.resolve(:projects).action).to eq(:show)
   end
 
   it "resolves controller actions inside a namespace" do
@@ -28,7 +39,7 @@ RSpec.describe Charming::Router do
       root "home#show"
     end
 
-    route = router.resolve("/")
+    route = router.resolve(:root)
 
     expect(route.controller_class).to eq(RouterSpecApp::HomeController)
     expect(route.action).to eq(:show)
@@ -41,84 +52,97 @@ RSpec.describe Charming::Router do
     router = described_class.new(namespace: "RouterSpecApp")
 
     router.draw do
-      screen "/admin/users", to: "admin/users#show"
+      screen :admin_users, "admin/users#show"
     end
 
-    route = router.resolve("/admin/users")
+    route = router.resolve(:admin_users)
 
     expect(route.controller_class).to eq(RouterSpecApp::Admin::UsersController)
     expect(route.action).to eq(:show)
   end
 
-  it "resolves dynamic route params with symbol keys" do
+  it "passes params through untouched" do
     router = described_class.new
+    entry = Object.new
 
     router.draw do
-      screen "/users/:id", to: "router_spec#show"
+      screen :project, "router_spec#show"
     end
 
-    route = router.resolve("/users/123")
+    route = router.resolve(:project, id: 5, entry: entry)
 
-    expect(route.controller_class).to eq(RouterSpecController)
-    expect(route.action).to eq(:show)
-    expect(route.params).to eq(id: "123")
+    expect(route.params).to eq(id: 5, entry: entry)
   end
 
-  it "resolves multiple dynamic route params" do
+  it "does not mutate the registered route when resolving with params" do
     router = described_class.new
 
     router.draw do
-      screen "/users/:user_id/posts/:id", to: "router_spec#show"
+      screen :project, "router_spec#show"
     end
 
-    route = router.resolve("/users/42/posts/7")
+    router.resolve(:project, id: 5)
 
-    expect(route.params).to eq(user_id: "42", id: "7")
+    expect(router.resolve(:project).params).to eq({})
   end
 
-  it "URL-decodes dynamic route params" do
+  it "raises KeyError listing registered names on an unknown screen" do
     router = described_class.new
 
     router.draw do
-      screen "/users/:name", to: "router_spec#show"
+      root "router_spec#show"
+      screen :projects, "router_spec#index"
     end
 
-    route = router.resolve("/users/Jane+Doe")
-
-    expect(route.params).to eq(name: "Jane Doe")
+    expect { router.resolve(:projets) }
+      .to raise_error(KeyError, /projets.*:root.*:projects/)
   end
 
-  it "prefers exact routes over dynamic routes" do
+  it "raises ArgumentError with a migration hint for a string path" do
     router = described_class.new
 
-    router.draw do
-      screen "/users/:id", to: "router_spec#show"
-      screen "/users/new", to: "router_spec#new"
-    end
-
-    route = router.resolve("/users/new")
-
-    expect(route.action).to eq(:new)
-    expect(route.params).to eq({})
+    expect { router.draw { screen "/projects", to: "router_spec#index" } }
+      .to raise_error(ArgumentError, /screen :projects/)
   end
 
-  it "does not partially match extra path segments" do
+  it "derives a title from the screen name" do
     router = described_class.new
 
     router.draw do
-      screen "/users/:id", to: "router_spec#show"
+      screen :project_list, "router_spec#index"
     end
 
-    expect { router.resolve("/users/123/edit") }.to raise_error(KeyError)
+    expect(router.resolve(:project_list).title).to eq("Project List")
   end
 
-  it "does not match missing dynamic segments" do
+  it "prefers an explicit title over the derived one" do
     router = described_class.new
 
     router.draw do
-      screen "/users/:id", to: "router_spec#show"
+      screen :projects, "router_spec#index", title: "All Projects"
     end
 
-    expect { router.resolve("/users") }.to raise_error(KeyError)
+    expect(router.resolve(:projects).title).to eq("All Projects")
+  end
+
+  it "defaults the root title to Home" do
+    router = described_class.new
+
+    router.draw do
+      root "router_spec#show"
+    end
+
+    expect(router.resolve(:root).title).to eq("Home")
+  end
+
+  it "returns all registered routes in insertion order" do
+    router = described_class.new
+
+    router.draw do
+      root "router_spec#show"
+      screen :projects, "router_spec#index"
+    end
+
+    expect(router.all.map(&:name)).to eq(%i[root projects])
   end
 end

@@ -24,7 +24,7 @@ RSpec.describe Charming::TestHelper do
       end
 
       def go_settings
-        navigate_to "/settings"
+        navigate :settings
       end
     end
   end
@@ -98,7 +98,7 @@ RSpec.describe Charming::TestHelper do
 
     it "supports navigate_to" do
       response = press(TestHelperSpecController, "g", app: app)
-      expect(response).to navigate_to("/settings")
+      expect(response).to navigate_to(:settings)
     end
   end
 

@@ -104,7 +104,7 @@ module Charming
           key "ctrl+p", :open_command_palette, scope: :global
 
           command "Home" do
-            navigate_to "/"
+            navigate :root
           end
 
           command "Theme", :open_theme_palette

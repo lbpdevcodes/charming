@@ -20,12 +20,12 @@ module Journal
       entry = persist_entry(values)
       reset_form_state
       show_toast(editing_entry ? "Updated \"#{entry.title}\"" : "Saved \"#{entry.title}\"")
-      navigate_to "/entries/#{entry.id}"
+      navigate :entry, id: entry.id
     end
 
     def entry_form_cancelled
       reset_form_state
-      navigate_to(editing_entry ? "/entries/#{editing_entry.id}" : "/")
+      editing_entry ? navigate(:entry, id: editing_entry.id) : navigate(:root)
     end
 
     def entry_form

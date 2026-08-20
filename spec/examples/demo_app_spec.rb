@@ -18,7 +18,7 @@ RSpec.describe "demo app example" do
   end
 
   it "registers the LG layout demo route" do
-    route = DemoApp::Application.routes.resolve("/lg")
+    route = DemoApp::Application.routes.resolve(:lg)
 
     expect(route.controller_class).to eq(DemoApp::LgController)
     expect(route.action).to eq(:show)
@@ -33,9 +33,9 @@ RSpec.describe "demo app example" do
     )
     app = DemoApp::Application.new
 
-    app.routes.resolve("/lg")
+    app.routes.resolve(:lg)
     Charming::Runtime.new(app, backend: backend).tap do |runtime|
-      runtime.instance_variable_set(:@route, app.routes.resolve("/lg"))
+      runtime.instance_variable_set(:@route, app.routes.resolve(:lg))
       runtime.run
     end
 
@@ -80,7 +80,7 @@ RSpec.describe "demo app example" do
     app = DemoApp::Application.new
 
     Charming::Runtime.new(app, backend: backend).tap do |runtime|
-      runtime.instance_variable_set(:@route, app.routes.resolve("/lg"))
+      runtime.instance_variable_set(:@route, app.routes.resolve(:lg))
       runtime.run
     end
 
@@ -309,7 +309,7 @@ RSpec.describe "demo app example" do
   end
 
   it "registers the physics demo route" do
-    route = DemoApp::Application.routes.resolve("/physics")
+    route = DemoApp::Application.routes.resolve(:physics)
 
     expect(route.controller_class).to eq(DemoApp::PhysicsController)
     expect(route.action).to eq(:show)
@@ -332,7 +332,7 @@ RSpec.describe "demo app example" do
     app = DemoApp::Application.new
 
     Charming::Runtime.new(app, backend: backend, clock: clock).tap do |runtime|
-      runtime.instance_variable_set(:@route, app.routes.resolve("/physics"))
+      runtime.instance_variable_set(:@route, app.routes.resolve(:physics))
       runtime.run
     end
 

@@ -31,7 +31,7 @@ module Charming
   # RSpec matchers (when RSpec is loaded):
   # - `expect(response).to render_text("...")` / `render_match(/.../)`
   # - `expect(response).to be_quit` / `be_navigate` (predicate matchers on Response)
-  # - `expect(response).to navigate_to("/path")`
+  # - `expect(response).to navigate_to(:projects)`
   module TestHelper
     # Builds a controller instance with sensible test defaults: a fresh Application,
     # an 80x24 screen, and no event.
@@ -108,13 +108,16 @@ if defined?(RSpec)
     end
   end
 
-  RSpec::Matchers.define :navigate_to do |expected_path|
+  RSpec::Matchers.define :navigate_to do |expected_name, **expected_params|
     match do |response|
-      response.respond_to?(:navigate?) && response.navigate? && response.path == expected_path
+      next false unless response.respond_to?(:navigate?) && response.navigate?
+      next false unless response.name == expected_name.to_sym
+
+      expected_params.empty? || response.params == expected_params
     end
 
     failure_message do |response|
-      "expected a navigation response to #{expected_path.inspect}, got: #{response.inspect}"
+      "expected a navigation response to #{expected_name.inspect}, got: #{response.inspect}"
     end
   end
 end

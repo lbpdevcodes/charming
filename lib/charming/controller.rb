@@ -143,9 +143,10 @@ module Charming
       render_default_action
     end
 
-    # Navigates to the given URL path.
-    def navigate_to(path)
-      @response = Response.navigate(path)
+    # Navigates to the screen registered under *name* in config/routes.rb, passing
+    # *params* through to the target controller (e.g. `navigate :project, id: project.id`).
+    def navigate(name, **params)
+      @response = Response.navigate(name, **params)
     end
 
     # Exits the application — sets a quit response that terminates the event loop.

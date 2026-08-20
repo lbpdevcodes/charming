@@ -15,9 +15,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   inputs Charming produces. `pluralize` covers a deliberate subset of English
   rules; exotic words may need a generated migration renamed by hand.
 
+### Changed
+
+- **Breaking:** Navigation is by screen name, not URL path.
+  `navigate :project, id: 5` replaces `navigate_to "/projects/5"`.
+  The controller helper is `navigate`. Migration: see UPGRADING.md.
+- **Breaking:** `config/routes.rb` registers screens by name:
+  `screen :projects, "projects#index"` replaces
+  `screen "/projects", to: "projects#index"`. `root "home#show"` is unchanged
+  and registers the reserved `:root` screen.
+- Route params pass through with their Ruby values intact. No URL decoding,
+  no string conversion: `navigate :entry, id: 5` yields `params[:id] == 5`.
+- A string URL path passed to `screen` or `navigate` raises `ArgumentError`
+  with a migration hint. `Router#resolve` on an unknown name raises `KeyError`
+  listing the registered screen names.
+
 ### Removed
 
 - The direct `activesupport` runtime dependency. `activemodel` remains and
   brings activesupport transitively. `Charming.env` now returns an internal
   `EnvInquirer` (same predicate API: `Charming.env.development?` etc.).
   No app-facing changes.
+- **Breaking:** URL path templates (`/entries/:id`), dynamic-route regex
+  matching, and percent-decoding. Register one named screen per parametric
+  page and pass params at navigate time.
+- **Breaking:** The `navigate_to` controller helper. Use `navigate`.

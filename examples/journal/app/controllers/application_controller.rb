@@ -12,25 +12,25 @@ module Journal
     timer :toast_expiry, every: 0.5, action: :expire_toast
 
     command "Entries" do
-      navigate_to "/"
+      navigate :root
     end
 
     command "Compose" do
-      navigate_to "/compose"
+      navigate :compose
     end
 
     command "Stats" do
-      navigate_to "/stats"
+      navigate :stats
     end
 
     command "Theme", :open_theme_palette
     command "Close palette", :close_command_palette
     command "Quit app", :quit
 
-    # The sidebar lists only static screens — dynamic routes (/entries/:id) are
-    # reachable by selecting an entry, not from the nav.
+    # The sidebar lists only static screens — the :entry/:edit_entry screens take
+    # an id param, so they are reachable by selecting an entry, not from the nav.
     def sidebar_routes
-      application.routes.all.reject { |route| route.path.include?(":") }
+      application.routes.all.reject { |route| %i[entry edit_entry].include?(route.name) }
     end
 
     # --- Toasts -----------------------------------------------------------------

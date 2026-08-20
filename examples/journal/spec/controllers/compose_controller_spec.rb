@@ -29,7 +29,7 @@ RSpec.describe Journal::ComposeController do
     entry = Journal::Entry.find_by(title: "Hello")
     expect(entry).not_to be_nil
     expect(entry.mood).to eq("good")
-    expect(response).to navigate_to("/entries/#{entry.id}")
+    expect(response).to navigate_to(:entry, id: entry.id)
   end
 
   it "keeps the form open with errors when the title is missing" do
@@ -42,7 +42,7 @@ RSpec.describe Journal::ComposeController do
 
   it "pre-seeds the form when editing" do
     entry = Journal::Entry.create!(title: "Original", mood: "rough", body: "body text")
-    route = app.routes.resolve("/entries/#{entry.id}/edit")
+    route = app.routes.resolve(:edit_entry, id: entry.id)
     controller = described_class.new(application: app, route: route, params: route.params)
     response = controller.dispatch(:edit)
 
@@ -53,7 +53,7 @@ RSpec.describe Journal::ComposeController do
 
   it "updates the record when an edit is submitted" do
     entry = Journal::Entry.create!(title: "Original", mood: "rough", body: "old")
-    route = app.routes.resolve("/entries/#{entry.id}/edit")
+    route = app.routes.resolve(:edit_entry, id: entry.id)
     described_class.new(application: app, route: route, params: route.params).dispatch(:edit)
 
     # Append to the title field, then save.
@@ -65,12 +65,12 @@ RSpec.describe Journal::ComposeController do
       event: key_event("ctrl+s")).dispatch_key
 
     expect(entry.reload.title).to eq("Original!!")
-    expect(response).to navigate_to("/entries/#{entry.id}")
+    expect(response).to navigate_to(:entry, id: entry.id)
   end
 
   it "cancels back to the journal on escape" do
     build_controller(described_class, app: app).dispatch(:show)
     response = press(described_class, "escape", app: app)
-    expect(response).to navigate_to("/")
+    expect(response).to navigate_to(:root)
   end
 end

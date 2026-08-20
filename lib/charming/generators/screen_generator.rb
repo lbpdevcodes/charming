@@ -141,14 +141,14 @@ module Charming
 
       # Inserts a `screen` route into `config/routes.rb`, idempotently.
       def insert_route
-        route = %(  screen "/#{name.snake_name}", to: "#{name.snake_name}#show", title: "#{name.class_name}")
+        route = %(  screen :#{name.snake_name}, "#{name.snake_name}#show", title: "#{name.class_name}")
         insert_before_end(route_path, route, "route", "end")
       end
 
       # Inserts a `command` block into `ApplicationController`, idempotently.
       def insert_command
         command = %(    command "#{name.class_name}" do
-      navigate_to "/#{name.snake_name}"
+      navigate :#{name.snake_name}
     end)
         insert_before_end(application_controller_path, command, "command", "  end")
       end

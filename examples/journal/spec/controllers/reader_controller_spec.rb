@@ -10,7 +10,7 @@ RSpec.describe Journal::ReaderController do
   let(:entry) { Journal::Entry.create!(title: "A walk", mood: "good", body: "It was **lovely**.") }
 
   def controller_for(event = nil)
-    route = app.routes.resolve("/entries/#{entry.id}")
+    route = app.routes.resolve(:entry, id: entry.id)
     described_class.new(application: app, route: route, params: route.params, event: event)
   end
 
@@ -24,11 +24,11 @@ RSpec.describe Journal::ReaderController do
   it "navigates to the edit screen on e" do
     controller_for.dispatch(:show)
     response = controller_for(key_event("e")).dispatch_key
-    expect(response).to navigate_to("/entries/#{entry.id}/edit")
+    expect(response).to navigate_to(:edit_entry, id: entry.id)
   end
 
   it "shows a friendly message for unknown ids" do
-    route = app.routes.resolve("/entries/999999")
+    route = app.routes.resolve(:entry, id: 999999)
     response = described_class.new(application: app, route: route, params: route.params).dispatch(:show)
     expect(response).to render_text("Entry not found")
   end
@@ -39,6 +39,6 @@ RSpec.describe Journal::ReaderController do
     response = controller_for(key_event("y")).dispatch_key
 
     expect(Journal::Entry.exists?(entry.id)).to be false
-    expect(response).to navigate_to("/")
+    expect(response).to navigate_to(:root)
   end
 end

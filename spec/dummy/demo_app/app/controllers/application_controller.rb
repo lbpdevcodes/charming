@@ -9,21 +9,21 @@ module DemoApp
     key "q", :quit, scope: :global
 
     command "Home" do
-      navigate_to "/"
+      navigate :root
     end
 
     command "Theme", :open_theme_palette
 
     command "LG Layout" do
-      navigate_to "/lg"
+      navigate :lg
     end
 
     command "Image" do
-      navigate_to "/image"
+      navigate :image
     end
 
     command "Charts" do
-      navigate_to "/charts"
+      navigate :charts
     end
 
     command "Close palette", :close_command_palette

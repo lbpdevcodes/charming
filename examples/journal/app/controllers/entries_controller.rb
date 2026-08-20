@@ -16,7 +16,7 @@ module Journal
     end
 
     def new_entry
-      navigate_to "/compose"
+      navigate :compose
     end
 
     def toggle_favorite
@@ -59,7 +59,7 @@ module Journal
 
     # Enter on the list opens the selected entry.
     def entries_selected(entry)
-      navigate_to "/entries/#{entry.id}"
+      navigate :entry, id: entry.id
     end
 
     # The selectable entry list, restored from session state each dispatch.

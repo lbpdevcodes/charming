@@ -44,7 +44,7 @@ RSpec.describe Charming::Welcome do
     end)
     stub_const("WelcomeSpec::Application", Class.new(Charming::Application) do
       routes do
-        screen "/settings", to: "settings#show"
+        screen :settings, "settings#show"
       end
     end)
 

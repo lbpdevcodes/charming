@@ -52,7 +52,7 @@ module Charming
       def current_route?(candidate)
         return candidate.controller_class == self.class && candidate.action == :show unless route
 
-        candidate.path == route.path &&
+        candidate.name == route.name &&
           candidate.controller_class == route.controller_class &&
           candidate.action == route.action
       end
@@ -139,7 +139,7 @@ module Charming
         route = sidebar_routes[sidebar_index]
         slot = content_slot
         focus.focus(slot) if slot
-        route ? navigate_to(route.path) : render_default_action
+        route ? navigate(route.name) : render_default_action
       end
     end
   end

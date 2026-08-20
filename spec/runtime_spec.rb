@@ -198,7 +198,7 @@ RSpec.describe Charming::Runtime do
       end
 
       def settings
-        navigate_to "/settings"
+        navigate :settings
       end
     end
     settings_controller = Class.new(Charming::Controller) do
@@ -213,7 +213,7 @@ RSpec.describe Charming::Runtime do
     navigation_app = Class.new(Charming::Application) do
       routes do
         root "navigation_runtime_spec_home#show"
-        screen "/settings", to: "navigation_runtime_spec_settings#show"
+        screen :settings, "navigation_runtime_spec_settings#show"
       end
     end
     backend = Charming::Internal::Terminal::MemoryBackend.new(
@@ -237,7 +237,7 @@ RSpec.describe Charming::Runtime do
       end
 
       def user
-        navigate_to "/users/123"
+        navigate :user, id: 123
       end
     end
     user_controller = Class.new(Charming::Controller) do
@@ -257,7 +257,7 @@ RSpec.describe Charming::Runtime do
     param_app = Class.new(Charming::Application) do
       routes do
         root "param_runtime_spec_home#show"
-        screen "/users/:id", to: "param_runtime_spec_users#show"
+        screen :user, "param_runtime_spec_users#show"
       end
     end
     backend = Charming::Internal::Terminal::MemoryBackend.new(
@@ -282,7 +282,7 @@ RSpec.describe Charming::Runtime do
       end
 
       def settings
-        navigate_to "/settings"
+        navigate :settings
       end
     end
     settings_controller = Class.new(Charming::Controller) do
@@ -297,7 +297,7 @@ RSpec.describe Charming::Runtime do
     navigation_app = Class.new(Charming::Application) do
       routes do
         root "resize_navigation_runtime_spec_home#show"
-        screen "/settings", to: "resize_navigation_runtime_spec_settings#show"
+        screen :settings, "resize_navigation_runtime_spec_settings#show"
       end
     end
     backend = Charming::Internal::Terminal::MemoryBackend.new(
@@ -415,7 +415,7 @@ RSpec.describe Charming::Runtime do
       end
 
       def go
-        navigate_to "/pulse"
+        navigate :pulse
       end
     end
     stub_const("PulseRuntimeSpecController", pulse_controller)
@@ -423,7 +423,7 @@ RSpec.describe Charming::Runtime do
     nav_app = Class.new(Charming::Application) do
       routes do
         root "home_runtime_spec#show"
-        screen "/pulse", to: "pulse_runtime_spec#show"
+        screen :pulse, "pulse_runtime_spec#show"
       end
     end
     backend = Charming::Internal::Terminal::MemoryBackend.new(
@@ -617,7 +617,7 @@ RSpec.describe Charming::Runtime do
       end
 
       def settings
-        navigate_to "/settings"
+        navigate :settings
       end
 
       def loaded
@@ -636,7 +636,7 @@ RSpec.describe Charming::Runtime do
     task_app = Class.new(Charming::Application) do
       routes do
         root "stale_task_runtime_spec_home#show"
-        screen "/settings", to: "stale_task_runtime_spec_settings#show"
+        screen :settings, "stale_task_runtime_spec_settings#show"
       end
     end
     backend = Charming::Internal::Terminal::MemoryBackend.new(

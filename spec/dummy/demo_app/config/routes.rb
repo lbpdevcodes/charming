@@ -2,8 +2,8 @@
 
 DemoApp::Application.routes do
   root "home#show"
-  screen "/lg", to: "lg#show", title: "LG Layout"
-  screen "/image", to: "image#show", title: "Image"
-  screen "/charts", to: "charts#show", title: "Charts"
-  screen "/physics", to: "physics#show", title: "Physics"
+  screen :lg, "lg#show", title: "LG Layout"
+  screen :image, "image#show", title: "Image"
+  screen :charts, "charts#show", title: "Charts"
+  screen :physics, "physics#show", title: "Physics"
 end

@@ -7,7 +7,7 @@ module Charming
   module Welcome
     # The fallback route the Runtime uses when the application has no routes.
     def self.route
-      Router::Route.new(path: "/", controller_class: Controller, action: :show, title: "Welcome", params: {})
+      Router::Route.new(name: :root, controller_class: Controller, action: :show, title: "Welcome", params: {})
     end
   end
 end

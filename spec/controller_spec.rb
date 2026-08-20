@@ -159,14 +159,14 @@ RSpec.describe Charming::Controller do
   it "returns a navigation response from controller actions" do
     controller = Class.new(described_class) do
       def settings
-        navigate_to "/settings"
+        navigate :settings
       end
     end
 
     response = controller.new(application: application).dispatch(:settings)
 
     expect(response).to be_navigate
-    expect(response.path).to eq("/settings")
+    expect(response.name).to eq(:settings)
   end
 
   it "renders view objects" do
@@ -665,7 +665,7 @@ RSpec.describe Charming::Controller do
       end
 
       def settings
-        navigate_to "/settings"
+        navigate :settings
       end
     end
 
@@ -673,14 +673,14 @@ RSpec.describe Charming::Controller do
     response = controller.new(application: application, event: Charming::Events::KeyEvent.new(key: :enter)).dispatch_key
 
     expect(response).to be_navigate
-    expect(response.path).to eq("/settings")
+    expect(response.name).to eq(:settings)
     expect(application.session).not_to have_key(:command_palette)
   end
 
   it "executes command blocks in the controller context" do
     controller = Class.new(described_class) do
       command "Settings" do
-        navigate_to "/settings"
+        navigate :settings
       end
 
       def show
@@ -692,7 +692,7 @@ RSpec.describe Charming::Controller do
     response = controller.new(application: application, event: Charming::Events::KeyEvent.new(key: :enter)).dispatch_key
 
     expect(response).to be_navigate
-    expect(response.path).to eq("/settings")
+    expect(response.name).to eq(:settings)
   end
 
   it "re-renders the default action after palette input" do
@@ -1014,7 +1014,7 @@ RSpec.describe Charming::Controller do
         component_class,
         extra: -> {
           command "Go somewhere" do
-            navigate_to "/other"
+            navigate :other
           end
         }
       )
@@ -1232,9 +1232,9 @@ RSpec.describe Charming::Controller do
       app_class = Class.new(Charming::Application)
       app_class.routes do
         root "route_aware_sidebar#show"
-        screen "/settings", to: "route_aware_sidebar#settings"
+        screen :settings, "route_aware_sidebar#settings"
       end
-      route = app_class.routes.resolve("/settings")
+      route = app_class.routes.resolve(:settings)
 
       controller = controller_class.new(application: app_class.new, route: route)
 
@@ -1254,12 +1254,12 @@ RSpec.describe Charming::Controller do
       app_class = Class.new(Charming::Application)
       app_class.routes do
         root "custom_sidebar_routes#show"
-        screen "/other", to: "custom_sidebar_routes#show"
+        screen :other, "custom_sidebar_routes#show"
       end
 
       controller = controller_class.new(application: app_class.new)
 
-      expect(controller.sidebar_routes.map(&:path)).to eq(["/other"])
+      expect(controller.sidebar_routes.map(&:name)).to eq([:other])
     end
 
     it "does not track sidebar/content focus when no focus_ring is declared" do

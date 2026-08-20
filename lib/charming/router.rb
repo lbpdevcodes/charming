@@ -1,16 +1,17 @@
 # frozen_string_literal: true
 
-require "uri"
-
 module Charming
-  # Router manages an application's route table and provides a Rails-inspired DSL for defining routes.
-  # Each route maps a URL path to a controller, action (implicitly :show), and title (for sidebar display).
+  # Router manages an application's screen table and provides a Rails-inspired DSL for
+  # defining screens. Each screen maps a symbolic name to a controller, an action
+  # (implicitly :show), and a title (for sidebar display). Navigation passes params
+  # directly — there are no URL path templates.
   class Router
-    # Route is a Data object holding a route's path template, target controller/action, title, and resolved params.
-    Route = Data.define(:path, :controller_class, :action, :title, :params) do
+    # Route is a Data object holding a screen's name, target controller/action, title,
+    # and resolved params.
+    Route = Data.define(:name, :controller_class, :action, :title, :params) do
       def with_params(params)
         self.class.new(
-          path: path,
+          name: name,
           controller_class: controller_class,
           action: action,
           title: title,
@@ -19,48 +20,48 @@ module Charming
       end
     end
 
-    DynamicRoute = Data.define(:route, :pattern, :param_names)
-
     # Initializes a new router with an optional namespace prefix for controller constant lookups.
     def initialize(namespace: nil)
       @namespace = namespace
       @routes = {}
-      @dynamic_routes = []
     end
 
-    # Evaluates a block in the context of this Router instance using instance_eval, allowing DSL calls like screen and root to register routes.
-    # This is how `routes.draw { screen "/", to: "HomeController", title: "Home" }` works.
+    # Evaluates a block in the context of this Router instance using instance_eval, allowing DSL
+    # calls like screen and root to register routes.
+    # This is how `routes.draw { root "home#show" }` works.
     def draw(&)
       instance_eval(&)
     end
 
-    # Registers the home screen at "/" with a given title. Shorthand for `screen path, to: target`.
-    # Example: `root "HomeController"` maps `/` → HomeController#show with title "Home".
+    # Registers the home screen under the reserved name :root.
+    # Example: `root "home#show"` maps :root → HomeController#show with title "Home".
     def root(target, title: "Home")
-      screen("/", to: target, title: title)
+      screen(:root, target, title: title)
     end
 
-    # Maps a URL path to a controller and action (e.g. "HomeController" for HomeController#show).
-    # Builds a Route object from the path, resolved controller constant, parsed action, and an optional or derived title.
-    def screen(path, to:, title: nil)
-      controller_name, action = to.split("#", 2)
-      route = Route.new(
-        path: path,
+    # Maps a symbolic *name* to a controller and action (e.g. "home#show" for
+    # HomeController#show; the action defaults to :show). *title* defaults to a
+    # humanized form of the name.
+    def screen(name, target = nil, title: nil, to: nil)
+      name = screen_name(name)
+      target ||= to or raise ArgumentError, "screen :#{name} needs a target like \"home#show\""
+      controller_name, action = target.split("#", 2)
+      @routes[name] = Route.new(
+        name: name,
         controller_class: constantize(controller_constant_name(controller_name)),
         action: (action || "show").to_sym,
-        title: title || derive_title(path),
+        title: title || derive_title(name),
         params: {}
       )
-      @routes[path] = route
-      @dynamic_routes.reject! { |dynamic_route| dynamic_route.route.path == path }
-      @dynamic_routes << compile_dynamic_route(route) if dynamic_path?(path)
     end
 
-    # Resolves a route by path from the router's table. Exact routes win over dynamic routes.
-    # Raises KeyError if no route matches.
-    # Used at runtime to look up the controller class and action for incoming requests.
-    def resolve(path = "/")
-      @routes[path] || resolve_dynamic(path) || raise(KeyError, "key not found: #{path.inspect}")
+    # Resolves a screen by name, returning the route with *params* attached. Raises
+    # KeyError listing the registered names when no screen matches. Used at runtime to
+    # look up the controller class and action for navigation.
+    def resolve(name = :root, params = {})
+      @routes.fetch(name.to_sym) do
+        raise KeyError, "unknown screen #{name.inspect} (registered screens: #{@routes.keys.map(&:inspect).join(", ")})"
+      end.with_params(params)
     end
 
     # Returns all registered routes as Route objects, ordered by insertion.
@@ -75,37 +76,13 @@ module Charming
     # For example, namespace "Admin" means HomeController resolves as Admin::HomeController.
     attr_reader :namespace
 
-    def dynamic_path?(path)
-      path.split("/").any? { |segment| segment.start_with?(":") && segment.length > 1 }
-    end
+    # Normalizes a screen name to a Symbol, rejecting legacy string URL paths with a
+    # migration hint.
+    def screen_name(name)
+      return name if name.is_a?(Symbol)
+      raise ArgumentError, string_path_hint(name, "screen") if name.is_a?(String) && name.start_with?("/")
 
-    def compile_dynamic_route(route)
-      param_names = []
-      segments = route.path.split("/", -1).map do |segment|
-        if segment.start_with?(":") && segment.length > 1
-          param_names << segment.delete_prefix(":").to_sym
-          "([^/]+)"
-        else
-          Regexp.escape(segment)
-        end
-      end
-
-      DynamicRoute.new(route: route, pattern: /\A#{segments.join("/")}\z/, param_names: param_names)
-    end
-
-    def resolve_dynamic(path)
-      @dynamic_routes.each do |dynamic_route|
-        match = dynamic_route.pattern.match(path)
-        return dynamic_route.route.with_params(extract_params(dynamic_route.param_names, match.captures)) if match
-      end
-
-      nil
-    end
-
-    def extract_params(names, values)
-      names.zip(values).to_h do |name, value|
-        [name, URI.decode_www_form_component(value)]
-      end
+      name.to_sym
     end
 
     # Looks up a constant by name in Object. Used to resolve controller strings from route definitions.
@@ -120,13 +97,18 @@ module Charming
       @namespace.to_s.empty? ? name : "#{@namespace}::#{name}"
     end
 
-    # Derives a human-readable title from a URL path by stripping the leading slash,
-    # splitting on underscores/hyphens/slashes, capitalizing each segment, and joining with spaces.
-    # Examples: "/projects" → "Projects", "/projects/list" → "Projects List".
-    def derive_title(path)
-      return "Home" if path == "/"
+    # Derives a human-readable title from a screen name by splitting on underscores and
+    # hyphens, capitalizing each segment, and joining with spaces.
+    # Example: :project_list → "Project List".
+    def derive_title(name)
+      name.to_s.split(/[_-]/).map(&:capitalize).join(" ")
+    end
 
-      path.delete_prefix("/").split(%r{[_\-/]}).map(&:capitalize).join(" ")
+    # The error message for callers still passing string URL paths.
+    def string_path_hint(path, dsl)
+      suggestion = path.split("/")[1].to_s.delete_prefix(":")
+      "String URL paths were removed. Register screens by name — `#{dsl} :#{suggestion}, ...` — " \
+        "and navigate with `navigate :#{suggestion}`. See UPGRADING.md."
     end
   end
 end
