@@ -115,17 +115,17 @@ module Charming
     # whole dispatch and attached to the response.
     def render(body = "", **assigns)
       body = view_body(default_template_name(body), **assigns) if body.is_a?(Symbol)
-      @response = Response.render(render_with_layout(body))
+      assign_response(Response.render(render_with_layout(body)), "render")
     end
 
     def render_view(view_class, **assigns)
-      @response = Response.render(render_with_layout(view_class.new(**template_assigns(assigns))))
+      assign_response(Response.render(render_with_layout(view_class.new(**template_assigns(assigns)))), "render_view(#{view_class})")
     end
 
     # Renders a template from `app/views` by name, applying the controller's layout. *name* is the
     # template path (e.g., "home/show") and additional keyword *assigns* are forwarded to the view.
     def render_template(name, **assigns)
-      @response = Response.render(render_with_layout(template_body(name, **assigns)))
+      assign_response(Response.render(render_with_layout(template_body(name, **assigns))), "render_template(#{name.inspect})")
     end
 
     # Returns the active theme for this request, delegated to the application.
@@ -147,12 +147,12 @@ module Charming
     # Navigates to the screen registered under *name* in config/routes.rb, passing
     # *params* through to the target controller (e.g. `navigate :project, id: project.id`).
     def navigate(name, **params)
-      @response = Response.navigate(name, **params)
+      assign_response(Response.navigate(name, **params), "navigate to :#{name}")
     end
 
     # Exits the application — sets a quit response that terminates the event loop.
     def quit
-      @response = Response.quit
+      assign_response(Response.quit, "quit")
     end
 
     # The component-dispatch collaborator: forwards key/mouse/paste events to focused
@@ -174,12 +174,44 @@ module Charming
 
     attr_reader :response
 
+    # The single funnel through which every response is assigned. Raises
+    # DoubleRenderError when a response was already set during this dispatch —
+    # a second assignment would silently discard the first.
+    def assign_response(value, attempted)
+      raise DoubleRenderError, double_render_message(attempted) if response
+
+      @response = value
+    end
+
+    # Builds the DoubleRenderError message, naming the action, the response
+    # already set, the one attempted, and the fix.
+    def double_render_message(attempted)
+      "#{dispatch_context} set the response twice in one dispatch: " \
+        "first #{describe_response(response)}, then #{attempted}. " \
+        "Set the response once per dispatch: remove the first call or restructure the action."
+    end
+
+    # The controller and action for error messages (e.g. "HomeController#show").
+    def dispatch_context
+      name = self.class.name || "Anonymous controller"
+      @current_action ? "#{name}##{@current_action}" : name
+    end
+
+    # A one-word description of a response for error messages.
+    def describe_response(response)
+      (response.kind == :navigate) ? "navigate to :#{response.name}" : response.kind.to_s
+    end
+
     # Sets per-dispatch state (the event) around the block, then clears @response and
     # @event when the outermost dispatch exits, so per-dispatch state cannot leak
     # between events. Nested dispatches (a key binding calling #dispatch) keep it.
+    # The outermost dispatch also clears @response on entry, so a response set outside
+    # any dispatch (e.g. in screen_entered) is discarded instead of tripping the
+    # DoubleRenderError guard on the next dispatch's first render.
     def with_dispatch_state(event)
       @event = event if event
       @dispatch_depth = @dispatch_depth.to_i + 1
+      @response = nil if @dispatch_depth == 1
       yield
     ensure
       @dispatch_depth -= 1

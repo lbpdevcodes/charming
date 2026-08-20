@@ -129,6 +129,8 @@ module Charming
 
       # Invokes the value (proc, lambda, or method symbol) of the selected *command*, then
       # closes the palette unless the command was :quit or the user has re-opened it.
+      # A command that set a response keeps it; only a command that produced no response
+      # falls back to the default render.
       def perform_command(command)
         current_palette_state = session[:command_palette]
         pop_command_palette_scope
@@ -136,7 +138,7 @@ module Charming
         if command.value != :quit && session[:command_palette].equal?(current_palette_state)
           session.delete(:command_palette)
         end
-        render_default_action unless response&.navigate? || response&.quit?
+        render_default_action unless response
       end
 
       # Returns the theme-switching commands used by the theme picker palette.

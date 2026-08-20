@@ -57,9 +57,13 @@ module Charming
         private
 
         # Wraps an action call in the full before/around/after hook chain and rescue handlers.
-        # Replaces the plain `public_send(action)` in Controller#dispatch.
+        # Replaces the plain `public_send(action)` in Controller#dispatch. Tracks the running
+        # action so the DoubleRenderError message can name it.
         def run_action_with_hooks(action)
+          previous, @current_action = @current_action, action
           run_with_rescue(action) { run_around_hooks(action) { run_action(action) } }
+        ensure
+          @current_action = previous
         end
 
         def run_action(action)

@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `Charming::DoubleRenderError`: raised when a dispatch sets the response
+  twice. `render`, `render_view`, `render_template`, `navigate`, and `quit`
+  each assign the response; a second assignment raises with a message naming
+  the action, the response already set, and the one attempted. A response set
+  outside any dispatch (e.g. in `screen_entered`) is discarded on the next
+  dispatch instead of raising.
 - `bin/bench-render`: render-pipeline benchmark (80x24/200x60/400x110 frames;
   full-change, single-line, and 30fps animate workloads; ms/frame and
   allocations/frame). Measured 0.007 ms/frame median on the 200x60 animate
@@ -49,6 +55,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Breaking:** Setting the response twice in one dispatch now raises
+  `Charming::DoubleRenderError` instead of silently keeping the last write.
+  Code that called `render` and then `navigate` (or any pair) in one action
+  relied on the overwrite; delete the dead first call. A palette command that
+  renders now keeps its own response instead of being overwritten by the
+  default render. Migration: see UPGRADING.md.
 - **Breaking:** The sidebar and command palette moved out of the controller
   kernel into an opt-in app shell. Include `Charming::Shell::Sidebar` and
   `Charming::Shell::Palette` in your `ApplicationController` to keep them;
