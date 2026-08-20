@@ -5,13 +5,13 @@ require_relative "lib/charming/version"
 Gem::Specification.new do |spec|
   spec.name = "charming"
   spec.version = Charming::VERSION
-  spec.authors = ["pando"]
-  spec.email = ["pandorocks@proton.me"]
+  spec.authors = ["lbpdevcodes"]
+  spec.email = ["lbpdevcodes@proton.me"]
 
   spec.summary = "A Rails-inspired TUI framework for Ruby."
   spec.description = "Charming brings Rails-like application, routing, controller, and rendering " \
                      "conventions to Ruby terminal user interfaces."
-  spec.homepage = "https://github.com/pandorocks/charming"
+  spec.homepage = "https://github.com/lbpdevcodes/charming"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 4.0.0"
 

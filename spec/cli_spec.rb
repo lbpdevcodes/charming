@@ -95,7 +95,7 @@ RSpec.describe Charming::CLI do
       Charming::Runtime.new(WeatherTui::Application.new, backend: backend).run
       expect(backend.frames.first).to include("Charming v#{Charming::VERSION}")
       expect(backend.frames.first).to include("A Rails-inspired Ruby TUI framework")
-      expect(backend.frames.first).to include("https://github.com/pandorocks/charming")
+      expect(backend.frames.first).to include("https://github.com/lbpdevcodes/charming")
       expect(backend.frames.first).to include("WeatherTui")
       expect(backend.frames.first).not_to include("> \u{25cf} Home")
       expect(backend.frames.first).not_to include("ctrl+p commands")

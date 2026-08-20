@@ -100,7 +100,7 @@ module Charming
       def footer
         column(
           text("Charming v#{Charming::VERSION}", style: theme.muted),
-          text("https://github.com/pandorocks/charming", style: theme.muted),
+          text("https://github.com/lbpdevcodes/charming", style: theme.muted),
           align: :center
         )
       end

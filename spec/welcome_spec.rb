@@ -20,7 +20,7 @@ RSpec.describe Charming::Welcome do
     expect(frame).to include("WelcomeSpec")
     expect(frame).to include("A Rails-inspired Ruby TUI framework")
     expect(frame).to include("Charming v#{Charming::VERSION}")
-    expect(frame).to include("https://github.com/pandorocks/charming")
+    expect(frame).to include("https://github.com/lbpdevcodes/charming")
     expect(frame).to include("config/routes.rb")
     expect(frame).to include("\e[38;2;240;67;124m")
   end
@@ -51,6 +51,6 @@ RSpec.describe Charming::Welcome do
     backend = run_app(WelcomeSpec::Application)
 
     expect(backend.frames.first).to include("Settings screen")
-    expect(backend.frames.first).not_to include("https://github.com/pandorocks/charming")
+    expect(backend.frames.first).not_to include("https://github.com/lbpdevcodes/charming")
   end
 end

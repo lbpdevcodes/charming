@@ -1,6 +1,6 @@
 # Charming
 
-[![CI](https://github.com/pandorocks/charming/actions/workflows/main.yml/badge.svg)](https://github.com/pandorocks/charming/actions/workflows/main.yml)
+[![CI](https://github.com/lbpdevcodes/charming/actions/workflows/main.yml/badge.svg)](https://github.com/lbpdevcodes/charming/actions/workflows/main.yml)
 
 A Rails-inspired terminal user interface framework for **Ruby 4+**.
 

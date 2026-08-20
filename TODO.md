@@ -11,6 +11,15 @@ Ruby TUI framework for Ruby 4+. Track of work to make this a proper production-r
 
 ## Priority 2 — Important
 
+- [ ] `TextInput` rejects `theme:` — accept it like the other components (the theme-injection
+      guide pushes apps toward passing `theme:` everywhere; gameroom hit this on 0.4.0 upgrade)
+- [ ] Runtime graphics detection: query XTVERSION (like the OSC 11 background probe) so kitty
+      graphics work over SSH when `TERM=xterm-256color` hides the terminal's identity —
+      env-only detection sent gameroom's chess board to the glyph fallback over SSH
+- [ ] Guard the kernel's `content_key_scope_active?` when the ring names `:content` without
+      `Shell::Sidebar` — it calls the sidebar module's `content_focused?` and crashes a
+      shell-less controller (gameroom worked around it by renaming the pane to `:body`)
+
 - [x] Add Table component — most requested widget in TUI frameworks
 - [x] Add Progressbar component
 - [x] Add missing common widgets: checkbox (MultiSelectList), tabs (TabBar), status bar (StatusBar) — plus Tree, Toast, Badge, Breadcrumbs, HelpOverlay, Autocomplete
