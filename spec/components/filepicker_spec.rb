@@ -35,7 +35,7 @@ RSpec.describe Charming::Components::Filepicker do
   it "descends into a directory on enter and lists a parent entry" do
     picker = described_class.new(root: @root)
 
-    expect(picker.handle_key(key(:enter))).to eq(:handled)
+    expect(picker.handle_key(key(:enter))).to eq(Charming::Components::Result.handled)
     expect(picker.current_dir).to eq(File.join(@root, "docs"))
     expect(picker.entries).to eq(["../", "guide.md"])
   end
@@ -45,14 +45,14 @@ RSpec.describe Charming::Components::Filepicker do
 
     picker.handle_key(key(:down))
 
-    expect(picker.handle_key(key(:enter))).to eq([:selected, File.join(@root, "README.md")])
+    expect(picker.handle_key(key(:enter))).to eq(Charming::Components::Result.selected(File.join(@root, "README.md")))
   end
 
   it "goes up a directory on backspace, but never above the root" do
     picker = described_class.new(root: @root)
 
     picker.handle_key(key(:enter))
-    expect(picker.handle_key(key(:backspace))).to eq(:handled)
+    expect(picker.handle_key(key(:backspace))).to eq(Charming::Components::Result.handled)
     expect(picker.current_dir).to eq(@root)
 
     expect(picker.handle_key(key(:backspace))).to be_nil

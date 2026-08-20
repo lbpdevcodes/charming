@@ -21,6 +21,13 @@ RSpec.describe Charming::View do
     expect(view.new(style: "ignored").render).to eq("\e[36mHello\e[0m")
   end
 
+  it "answers respond_to? for assign names" do
+    view = Class.new(described_class).new(name: "Ruby")
+
+    expect(view.respond_to?(:name)).to be true
+    expect(view.respond_to?(:missing_assign)).to be false
+  end
+
   it "renders text with optional styles" do
     view = Class.new(described_class) do
       def render

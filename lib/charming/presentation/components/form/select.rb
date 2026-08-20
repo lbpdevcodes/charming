@@ -24,14 +24,14 @@ module Charming
         end
 
         # Forwards key events to the underlying List, syncing the chosen option index back
-        # into the field state. Returns :handled when consumed.
+        # into the field state. Returns Result.handled when consumed.
         def handle_key(event)
           selection = list
           result = selection.handle_key(event)
-          return nil unless result == :handled
+          return nil unless result&.handled?
 
           save_selection(selection.selected_index)
-          :handled
+          Result.handled
         end
 
         private

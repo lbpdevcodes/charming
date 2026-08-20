@@ -41,7 +41,7 @@ RSpec.describe Charming::Components::Form do
     state = {}
     form = described_class.new(fields: [described_class::Input.new(:name)], state: state)
 
-    expect(form.handle_key(key(:a, char: "a"))).to eq(:handled)
+    expect(form.handle_key(key(:a, char: "a"))).to eq(Charming::Components::Result.handled)
 
     expect(state[:values]).to eq(name: "a")
     expect(state[:fields]).to eq(name: {cursor: 1})
@@ -52,7 +52,7 @@ RSpec.describe Charming::Components::Form do
     state = {}
     form = described_class.new(fields: [described_class::Select.new(:plan, options: %w[Free Pro Team])], state: state)
 
-    expect(form.handle_key(key(:down))).to eq(:handled)
+    expect(form.handle_key(key(:down))).to eq(Charming::Components::Result.handled)
 
     expect(state[:values]).to eq(plan: "Pro")
     expect(state[:fields]).to eq(plan: {selected_index: 1})
@@ -66,9 +66,9 @@ RSpec.describe Charming::Components::Form do
       state: state
     )
 
-    expect(form.handle_key(key(:space, char: " "))).to eq(:handled)
-    expect(form.handle_key(key(:down))).to eq(:handled)
-    expect(form.handle_key(key(:space, char: " "))).to eq(:handled)
+    expect(form.handle_key(key(:space, char: " "))).to eq(Charming::Components::Result.handled)
+    expect(form.handle_key(key(:down))).to eq(Charming::Components::Result.handled)
+    expect(form.handle_key(key(:space, char: " "))).to eq(Charming::Components::Result.handled)
 
     expect(state[:values]).to eq(tags: %w[ruby go])
     expect(state[:fields]).to eq(tags: {selected_indices: [0, 1], cursor: 1})
@@ -88,7 +88,7 @@ RSpec.describe Charming::Components::Form do
 
     form.handle_key(key(:space, char: " "))
 
-    expect(form.handle_key(key(:enter))).to eq([:submitted, {tags: %w[ruby]}])
+    expect(form.handle_key(key(:enter))).to eq(Charming::Components::Result.submitted({tags: %w[ruby]}))
   end
 
   it "caps multiselect checks at max_selections" do
@@ -132,11 +132,11 @@ RSpec.describe Charming::Components::Form do
       state: state
     )
 
-    expect(form.handle_key(key(:enter, char: "\n"))).to eq(:handled)
+    expect(form.handle_key(key(:enter, char: "\n"))).to eq(Charming::Components::Result.handled)
     expect(state[:focus_index]).to eq(0)
     expect(state[:values][:bio]).to eq("\n")
 
-    expect(form.handle_key(key(:tab))).to eq(:handled)
+    expect(form.handle_key(key(:tab))).to eq(Charming::Components::Result.handled)
     expect(state[:focus_index]).to eq(1)
   end
 
@@ -155,9 +155,9 @@ RSpec.describe Charming::Components::Form do
     state = {}
     form = described_class.new(fields: [described_class::Textarea.new(:bio)], state: state)
 
-    expect(form.handle_key(key(:enter, char: "\n", shift: true))).to eq(:handled)
-    expect(form.handle_key(key(:j, ctrl: true))).to eq(:handled)
-    expect(form.handle_key(key(:n, ctrl: true))).to eq(:handled)
+    expect(form.handle_key(key(:enter, char: "\n", shift: true))).to eq(Charming::Components::Result.handled)
+    expect(form.handle_key(key(:j, ctrl: true))).to eq(Charming::Components::Result.handled)
+    expect(form.handle_key(key(:n, ctrl: true))).to eq(Charming::Components::Result.handled)
 
     expect(state[:values][:bio]).to eq("\n\n\n")
   end
@@ -166,14 +166,14 @@ RSpec.describe Charming::Components::Form do
     state = {values: {bio: "hello"}}
     form = described_class.new(fields: [described_class::Textarea.new(:bio)], state: state)
 
-    expect(form.handle_key(key(:s, ctrl: true))).to eq([:submitted, {bio: "hello"}])
+    expect(form.handle_key(key(:s, ctrl: true))).to eq(Charming::Components::Result.submitted({bio: "hello"}))
   end
 
   it "toggles confirm fields with space and y/n keys" do
     state = {}
     form = described_class.new(fields: [described_class::Confirm.new(:terms)], state: state)
 
-    expect(form.handle_key(key(:space))).to eq(:handled)
+    expect(form.handle_key(key(:space))).to eq(Charming::Components::Result.handled)
     expect(state[:values][:terms]).to eq(true)
 
     form.handle_key(key(:n, char: "n"))
@@ -190,7 +190,7 @@ RSpec.describe Charming::Components::Form do
       state: state
     )
 
-    expect(form.handle_key(key(:tab))).to eq(:handled)
+    expect(form.handle_key(key(:tab))).to eq(Charming::Components::Result.handled)
     expect(state[:focus_index]).to eq(1)
 
     form.handle_key(key(:tab, shift: true))
@@ -204,17 +204,17 @@ RSpec.describe Charming::Components::Form do
       state: state
     )
 
-    expect(form.handle_key(key(:enter))).to eq(:handled)
+    expect(form.handle_key(key(:enter))).to eq(Charming::Components::Result.handled)
     expect(state[:focus_index]).to eq(1)
 
-    expect(form.handle_key(key(:enter))).to eq([:submitted, {name: "Ada", terms: true}])
+    expect(form.handle_key(key(:enter))).to eq(Charming::Components::Result.submitted({name: "Ada", terms: true}))
   end
 
   it "renders validation errors instead of submitting invalid values" do
     state = {}
     form = described_class.new(fields: [described_class::Input.new(:name, required: true)], state: state)
 
-    expect(form.handle_key(key(:enter))).to eq(:handled)
+    expect(form.handle_key(key(:enter))).to eq(Charming::Components::Result.handled)
 
     expect(state[:errors]).to eq(name: ["is required"])
     expect(plain(form.render)).to include("is required")
@@ -224,22 +224,22 @@ RSpec.describe Charming::Components::Form do
     state = {values: {bio: "  \n  "}}
     form = described_class.new(fields: [described_class::Textarea.new(:bio, required: true)], state: state)
 
-    expect(form.handle_key(key(:s, ctrl: true))).to eq(:handled)
+    expect(form.handle_key(key(:s, ctrl: true))).to eq(Charming::Components::Result.handled)
 
     expect(state[:errors]).to eq(bio: ["is required"])
   end
 
-  it "returns cancelled on escape" do
+  it "returns Result.cancelled on escape" do
     form = described_class.new(fields: [described_class::Input.new(:name)], state: {})
 
-    expect(form.handle_key(key(:escape))).to eq(:cancelled)
+    expect(form.handle_key(key(:escape))).to eq(Charming::Components::Result.cancelled)
   end
 
   it "inserts pasted text into the focused input field and persists it to state" do
     state = {}
     form = described_class.new(fields: [described_class::Input.new(:name, value: "ab")], state: state)
 
-    expect(form.handle_paste(Charming::Events::PasteEvent.new(text: "XY"))).to eq(:handled)
+    expect(form.handle_paste(Charming::Events::PasteEvent.new(text: "XY"))).to eq(Charming::Components::Result.handled)
 
     expect(state[:values]).to eq(name: "abXY")
     expect(state[:fields]).to eq(name: {cursor: 4})
@@ -249,7 +249,7 @@ RSpec.describe Charming::Components::Form do
     state = {}
     form = described_class.new(fields: [described_class::Textarea.new(:bio)], state: state)
 
-    expect(form.handle_paste(Charming::Events::PasteEvent.new(text: "line one\r\nline two"))).to eq(:handled)
+    expect(form.handle_paste(Charming::Events::PasteEvent.new(text: "line one\r\nline two"))).to eq(Charming::Components::Result.handled)
 
     expect(state[:values]).to eq(bio: "line one\nline two")
     expect(state[:fields][:bio]).to include(cursor: 17)

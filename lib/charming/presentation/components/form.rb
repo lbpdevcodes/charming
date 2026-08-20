@@ -28,7 +28,7 @@ module Charming
       # or submits, and unhandled keys are passed to the focused field.
       def handle_key(event)
         key = Charming.key_of(event)
-        return :cancelled if key == :escape
+        return Result.cancelled if key == :escape
         return submit if submit_shortcut?(event)
         return move_focus(tab_direction(event)) if key == :tab
 
@@ -103,14 +103,14 @@ module Charming
         move_focus(+1)
       end
 
-      # Validates all fields, focuses the first invalid one, and returns [:submitted, values]
-      # when there are no errors.
+      # Validates all fields, focuses the first invalid one, and returns
+      # Result.submitted(values) when there are no errors.
       def submit
         state[:errors] = validation_errors
         focus_first_error unless state[:errors].empty?
-        return :handled unless state[:errors].empty?
+        return Result.handled unless state[:errors].empty?
 
-        [:submitted, values.dup]
+        Result.submitted(values.dup)
       end
 
       # Runs each field's validator and collects per-field error messages.
@@ -139,7 +139,7 @@ module Charming
 
         current = indices.index(state[:focus_index]) || 0
         state[:focus_index] = indices[(current + direction) % indices.length]
-        :handled
+        Result.handled
       end
 
       # True when the current focus index is the last focusable field.

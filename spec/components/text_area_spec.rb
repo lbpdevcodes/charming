@@ -14,7 +14,7 @@ RSpec.describe Charming::Components::TextArea do
   it "inserts printable characters at the cursor" do
     area = described_class.new(value: "ac", cursor: 1)
 
-    expect(area.handle_key(key(:b, char: "b"))).to eq(:handled)
+    expect(area.handle_key(key(:b, char: "b"))).to eq(Charming::Components::Result.handled)
 
     expect(area.value).to eq("abc")
     expect(area.cursor).to eq(2)
@@ -24,7 +24,7 @@ RSpec.describe Charming::Components::TextArea do
   it "inserts a newline on plain enter by default" do
     area = described_class.new(value: "abc")
 
-    expect(area.handle_key(key(:enter, char: "\n"))).to eq(:handled)
+    expect(area.handle_key(key(:enter, char: "\n"))).to eq(Charming::Components::Result.handled)
     expect(area.value).to eq("abc\n")
   end
 
@@ -47,9 +47,9 @@ RSpec.describe Charming::Components::TextArea do
   it "inserts newlines with shift-enter, ctrl-j, or ctrl-n regardless of enter_newline" do
     area = described_class.new(enter_newline: false)
 
-    expect(area.handle_key(key(:enter, char: "\n", shift: true))).to eq(:handled)
-    expect(area.handle_key(key(:j, ctrl: true))).to eq(:handled)
-    expect(area.handle_key(key(:n, ctrl: true))).to eq(:handled)
+    expect(area.handle_key(key(:enter, char: "\n", shift: true))).to eq(Charming::Components::Result.handled)
+    expect(area.handle_key(key(:j, ctrl: true))).to eq(Charming::Components::Result.handled)
+    expect(area.handle_key(key(:n, ctrl: true))).to eq(Charming::Components::Result.handled)
 
     expect(area.value).to eq("\n\n\n")
     expect(area.render).to eq("\n\n\n|")

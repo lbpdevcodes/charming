@@ -76,7 +76,7 @@ RSpec.describe Charming::Components::Viewport do
   it "scrolls down and up with keys" do
     viewport = described_class.new(content: "One\nTwo\nThree", height: 2)
 
-    expect(viewport.handle_key(key(:down))).to eq(:handled)
+    expect(viewport.handle_key(key(:down))).to eq(Charming::Components::Result.handled)
     expect(viewport.render).to eq("Two\nThree")
 
     viewport.handle_key(key(:up))
@@ -86,7 +86,7 @@ RSpec.describe Charming::Components::Viewport do
   it "supports vim vertical navigation keys by default" do
     viewport = described_class.new(content: "One\nTwo\nThree", height: 2)
 
-    expect(viewport.handle_key(key(:j))).to eq(:handled)
+    expect(viewport.handle_key(key(:j))).to eq(Charming::Components::Result.handled)
     expect(viewport.render).to eq("Two\nThree")
 
     viewport.handle_key(key(:k))
@@ -138,7 +138,7 @@ RSpec.describe Charming::Components::Viewport do
   it "allows custom navigation keymaps" do
     viewport = described_class.new(content: "One\nTwo\nThree", height: 2, keymap: {down: :s})
 
-    expect(viewport.handle_key(key(:s))).to eq(:handled)
+    expect(viewport.handle_key(key(:s))).to eq(Charming::Components::Result.handled)
     expect(viewport.render).to eq("Two\nThree")
   end
 
@@ -214,7 +214,7 @@ RSpec.describe Charming::Components::Viewport do
   it "scrolls vertically with mouse wheel events" do
     viewport = described_class.new(content: "One\nTwo\nThree", height: 2)
 
-    expect(viewport.handle_mouse(mouse(65))).to eq(:handled)
+    expect(viewport.handle_mouse(mouse(65))).to eq(Charming::Components::Result.handled)
     expect(viewport.render).to eq("Two\nThree")
 
     viewport.handle_mouse(mouse(64))
@@ -224,7 +224,7 @@ RSpec.describe Charming::Components::Viewport do
   it "moves the offset to clicked rows inside the viewport" do
     viewport = described_class.new(content: "One\nTwo\nThree\nFour", height: 2)
 
-    expect(viewport.handle_mouse(mouse(0, y: 1))).to eq(:handled)
+    expect(viewport.handle_mouse(mouse(0, y: 1))).to eq(Charming::Components::Result.handled)
 
     expect(viewport.offset).to eq(1)
     expect(viewport.render).to eq("Two\nThree")

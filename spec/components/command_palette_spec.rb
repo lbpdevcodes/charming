@@ -22,7 +22,7 @@ RSpec.describe Charming::Components::CommandPalette do
   it "filters commands as the user types" do
     palette = described_class.new(commands: [command("Open File"), command("Quit")])
 
-    expect(palette.handle_key(key(:q, char: "q"))).to eq(:handled)
+    expect(palette.handle_key(key(:q, char: "q"))).to eq(Charming::Components::Result.handled)
 
     expect(palette.render).to eq("q|\n#{selected("> Quit")}")
     expect(palette.selected_command.label).to eq("Quit")
@@ -31,7 +31,7 @@ RSpec.describe Charming::Components::CommandPalette do
   it "moves the selected command down and up" do
     palette = described_class.new(commands: [command("Open"), command("Run"), command("Quit")])
 
-    expect(palette.handle_key(key(:down))).to eq(:handled)
+    expect(palette.handle_key(key(:down))).to eq(Charming::Components::Result.handled)
     palette.handle_key(key(:down))
     palette.handle_key(key(:up))
 
@@ -44,13 +44,13 @@ RSpec.describe Charming::Components::CommandPalette do
 
     palette.handle_key(key(:down))
 
-    expect(palette.handle_key(key(:enter))).to eq([:selected, quit])
+    expect(palette.handle_key(key(:enter))).to eq(Charming::Components::Result.selected(quit))
   end
 
-  it "returns cancelled on escape" do
+  it "returns Result.cancelled on escape" do
     palette = described_class.new(commands: [command("Open")])
 
-    expect(palette.handle_key(key(:escape))).to eq(:cancelled)
+    expect(palette.handle_key(key(:escape))).to eq(Charming::Components::Result.cancelled)
   end
 
   it "initializes from primitive state" do

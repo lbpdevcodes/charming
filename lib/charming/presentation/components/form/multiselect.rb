@@ -27,16 +27,15 @@ module Charming
         end
 
         # Forwards key events to the underlying MultiSelectList, syncing the checked
-        # set and highlight cursor back into the field state. Returns :handled when
-        # consumed; Enter (the list's submit) is left unconsumed for the Form.
+        # set and highlight cursor back into the field state. Returns Result.handled when
+        # consumed; Enter (the list's Result.submitted) is left unconsumed for the Form.
         def handle_key(event)
           widget = list
           result = widget.handle_key(event)
-          return nil if result.is_a?(Array)
-          return nil unless result == :handled
+          return nil unless result&.handled?
 
           save_selection(widget)
-          :handled
+          Result.handled
         end
 
         private

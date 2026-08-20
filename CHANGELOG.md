@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `Charming::Components::Result`: the component return protocol for
+  `handle_key`/`handle_mouse`/`handle_paste` — `Result.handled`,
+  `Result.submitted(value)`, `Result.selected(value)`, `Result.cancelled`,
+  and `Result.changed(value)` (reserved; no `on_change` DSL yet). Built-in
+  components return Results. Legacy forms (`:handled`, `:cancelled`,
+  `[:submitted, v]`, `[:selected, v]`) still work in app components — the
+  dispatch pipeline normalizes them with `Result.normalize`, no deprecation.
+- `API_POLICY.md`: the 1.0 stability contract — `Charming::Internal` is
+  unversioned, everything else follows semver from 1.0. `rake api:public`
+  lists the public constants; `spec/api_policy_spec.rb` locks the list so API
+  drift fails the suite and shows up in review.
 - `ApplicationState.persist :attr, ...`: explicit attribute persistence for
   `persist_session`. State objects serialize as their class name plus the
   marked (JSON-safe) attributes and re-instantiate on boot; unmarked
@@ -96,6 +107,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- View assigns no longer define per-instance singleton methods. Assign keys
+  resolve via `method_missing`/`respond_to_missing?` (existing methods still
+  win, exactly as before). A 6-assign view now allocates 5 objects per
+  construction instead of 40 (measured via GC.stat on 1000 constructions).
 - `save_session` never drops data silently anymore. State classes with no
   `persist` declarations and non-JSON-safe raw session values warn once per
   key/class (category `:session_drop`), naming the fix. At 1.0, undeclared

@@ -14,7 +14,7 @@ RSpec.describe Charming::Components::HelpOverlay do
   it "dismisses on any key" do
     overlay = described_class.new(bindings: {})
     event = Charming::Events::KeyEvent.new(key: :x)
-    expect(overlay.handle_key(event)).to eq(:cancelled)
+    expect(overlay.handle_key(event)).to eq(Charming::Components::Result.cancelled)
   end
 
   it "builds from a controller class's key bindings" do

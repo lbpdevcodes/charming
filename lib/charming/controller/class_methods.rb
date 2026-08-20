@@ -51,19 +51,19 @@ module Charming
       end
 
       # Declares the action dispatched when the component in *slot* submits a value
-      # (`[:submitted, value]` from its `handle_key`). The action receives the value.
+      # (`Result.submitted(value)` from its `handle_key`; legacy forms normalize). The action receives the value.
       def on_submit(slot, action)
         component_event_bindings[[slot.to_sym, :submitted]] = action.to_sym
       end
 
       # Declares the action dispatched when the component in *slot* selects an item
-      # (`[:selected, value]` from its `handle_key`). The action receives the value.
+      # (`Result.selected(value)` from its `handle_key`; legacy forms normalize). The action receives the value.
       def on_select(slot, action)
         component_event_bindings[[slot.to_sym, :selected]] = action.to_sym
       end
 
       # Declares the action dispatched when the component in *slot* is cancelled
-      # (`:cancelled` from its `handle_key`). The action receives no arguments.
+      # (`Result.cancelled` from its `handle_key`; legacy forms normalize). The action receives no arguments.
       def on_cancel(slot, action)
         component_event_bindings[[slot.to_sym, :cancelled]] = action.to_sym
       end

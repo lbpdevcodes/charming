@@ -28,8 +28,9 @@ module Charming
         @style = style
       end
 
-      # Scrolls the body when it is taller than max_body_height. Returns :handled when the
-      # key moved the viewport, nil otherwise (so callers can route unconsumed keys).
+      # Scrolls the body when it is taller than max_body_height. Returns the Viewport's
+      # Result (Result.handled when the key scrolled), or nil when the modal is not
+      # scrollable (so callers can route unconsumed keys).
       def handle_key(event)
         return nil unless scrollable?
 

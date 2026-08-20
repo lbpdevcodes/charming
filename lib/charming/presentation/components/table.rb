@@ -41,20 +41,20 @@ module Charming
         @height = height
       end
 
-      # Handles key events. Returns `[:selected, row]` on Enter; otherwise delegates to the
-      # KeyboardHandler for navigation keys.
+      # Handles key events. Returns `Result.selected(row)` on Enter; otherwise delegates
+      # to the KeyboardHandler for navigation keys.
       def handle_key(event)
         return nil if rows.empty?
 
         case Charming.key_of(event)
-        when :enter then [:selected, selected_row]
+        when :enter then Result.selected(selected_row)
         else super
         end
       end
 
       # Handles mouse events: a click within the body area selects the clicked row
       # (relative to the visible window when a height is set).
-      # Returns :handled on a successful click.
+      # Returns Result.handled on a successful click.
       def handle_mouse(event)
         return nil if rows.empty?
         return nil unless event.respond_to?(:click?) && event.click?
@@ -63,7 +63,7 @@ module Charming
         return nil if clicked.negative? || clicked >= visible_row_count
 
         @selected_index = viewport_start + clicked
-        :handled
+        Result.handled
       end
 
       # Returns the currently selected row, or nil when the table is empty.

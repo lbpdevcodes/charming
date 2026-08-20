@@ -15,7 +15,7 @@ RSpec.describe Charming::Components::MultiSelectList do
 
   it "toggles the highlighted item with space" do
     list = described_class.new(items: items)
-    expect(list.handle_key(key(:space))).to eq(:handled)
+    expect(list.handle_key(key(:space))).to eq(Charming::Components::Result.handled)
     expect(Charming::UI::Width.strip_ansi(list.render)).to include("[x] ruby")
   end
 
@@ -34,9 +34,9 @@ RSpec.describe Charming::Components::MultiSelectList do
     expect(list.selected_items).to eq(%w[ruby rails])
   end
 
-  it "returns [:submitted, items] on enter" do
+  it "returns Result.submitted(items) on enter" do
     list = described_class.new(items: items, selected_indices: [0, 2])
-    expect(list.handle_key(key(:enter))).to eq([:submitted, %w[ruby rspec]])
+    expect(list.handle_key(key(:enter))).to eq(Charming::Components::Result.submitted(%w[ruby rspec]))
   end
 
   it "enforces max_selections" do

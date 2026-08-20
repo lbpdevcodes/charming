@@ -16,8 +16,8 @@ module Charming
     #
     # Tiers differ in how they terminate: the palette, overlay, sidebar, and binding
     # tiers consume the key outright once their condition holds, while the component
-    # tiers only consume it when the component reports :handled and otherwise let it
-    # fall through to the next tier.
+    # tiers only consume it when the component reports a handled result and otherwise
+    # let it fall through to the next tier.
     class KeyDispatch
       def initialize(controller)
         @controller = controller

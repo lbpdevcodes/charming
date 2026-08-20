@@ -70,10 +70,10 @@ module Charming
         palette = command_palette
         result = palette.handle_key(event)
 
-        if result == :cancelled
+        if result&.cancelled?
           close_command_palette
         elsif selected_command?(result)
-          perform_command(result.last)
+          perform_command(result.value)
         else
           save_command_palette_state(palette)
           render_default_action unless response
@@ -122,9 +122,9 @@ module Charming
         session[:command_palette] = session.fetch(:command_palette).merge(palette.state)
       end
 
-      # True when a component result is the `[:selected, command]` array shape.
+      # True when a component result carries a selected command (Result.selected).
       def selected_command?(result)
-        result.is_a?(Array) && result.first == :selected
+        result.respond_to?(:selected?) && result.selected?
       end
 
       # Invokes the value (proc, lambda, or method symbol) of the selected *command*, then

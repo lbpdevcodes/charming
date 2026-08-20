@@ -51,26 +51,26 @@ module Charming
       end
 
       # Handles key events. Inserts printable characters, submits on Enter
-      # (returning `[:submitted, value]` so a focused slot dispatches
+      # (returning `Result.submitted(value)` so a focused slot dispatches
       # `<slot>_submitted(value)`), recalls history on up/down (when enabled),
       # otherwise dispatches via KEY_ACTIONS.
-      # Returns :handled or `[:submitted, value]` when the event was consumed, nil otherwise.
+      # Returns Result.handled or Result.submitted(value) when the event was consumed, nil otherwise.
       def handle_key(event)
-        return :handled if character_event?(event) && insert(event.char)
+        return Result.handled if character_event?(event) && insert(event.char)
 
         key = Charming.key_of(event)
-        return [:submitted, value] if key == :enter
-        return :handled if history_event(key)
+        return Result.submitted(value) if key == :enter
+        return Result.handled if history_event(key)
 
         super
       end
 
       # Inserts pasted text at the cursor (newlines and control characters are
-      # stripped — this is a single-line input). Returns :handled.
+      # stripped — this is a single-line input). Returns Result.handled.
       def handle_paste(event)
         sanitized = event.text.to_s.gsub(/[[:cntrl:]]/, "")
         insert(sanitized) unless sanitized.empty?
-        :handled
+        Result.handled
       end
 
       # Renders the value with a cursor marker. When *width* was given at construction, the

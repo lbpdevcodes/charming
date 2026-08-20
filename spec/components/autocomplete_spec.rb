@@ -32,17 +32,17 @@ RSpec.describe Charming::Components::Autocomplete do
 
   it "submits the highlighted suggestion on enter" do
     combo = described_class.new(suggestions: suggestions, value: "ra")
-    expect(combo.handle_key(key(:enter))).to eq([:submitted, "rails"])
+    expect(combo.handle_key(key(:enter))).to eq(Charming::Components::Result.submitted("rails"))
   end
 
   it "submits free text when nothing matches" do
     combo = described_class.new(suggestions: suggestions, value: "zig")
-    expect(combo.handle_key(key(:enter))).to eq([:submitted, "zig"])
+    expect(combo.handle_key(key(:enter))).to eq(Charming::Components::Result.submitted("zig"))
   end
 
   it "cancels on escape" do
     combo = described_class.new(suggestions: suggestions)
-    expect(combo.handle_key(key(:escape))).to eq(:cancelled)
+    expect(combo.handle_key(key(:escape))).to eq(Charming::Components::Result.cancelled)
   end
 
   it "types into the inner input and re-filters" do
@@ -54,7 +54,7 @@ RSpec.describe Charming::Components::Autocomplete do
 
   it "inserts pasted text and re-filters suggestions" do
     combo = described_class.new(suggestions: suggestions, value: "r", selected_index: 2)
-    expect(combo.handle_paste(Charming::Events::PasteEvent.new(text: "spe"))).to eq(:handled)
+    expect(combo.handle_paste(Charming::Events::PasteEvent.new(text: "spe"))).to eq(Charming::Components::Result.handled)
     expect(combo.value).to eq("rspe")
     expect(combo.filtered_suggestions).to eq(%w[rspec])
     expect(combo.selected_index).to eq(0)

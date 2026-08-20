@@ -39,7 +39,7 @@ RSpec.describe Charming::Components::Table do
       table = described_class.new(header: %w[Name N], rows: rows, height: 3, selected_index: 6)
       # window starts at row index 4 (rows 5..7 visible); click body row 0 → index 4
       event = Charming::Events::MouseEvent.new(button: 0, x: 1, y: described_class::HEADER_HEIGHT)
-      expect(table.handle_mouse(event)).to eq(:handled)
+      expect(table.handle_mouse(event)).to eq(Charming::Components::Result.handled)
       expect(table.selected_index).to eq(4)
     end
 

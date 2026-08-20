@@ -9,8 +9,8 @@ module Charming
     #
     #   Autocomplete.new(suggestions: ["ruby", "rails", "rspec"], value: "r")
     #
-    # `handle_key` returns `[:submitted, value]` on Enter, `:cancelled` on Escape,
-    # `:handled` for consumed keys, nil otherwise.
+    # `handle_key` returns `Result.submitted(value)` on Enter, `Result.cancelled` on
+    # Escape, `Result.handled` for consumed keys, nil otherwise.
     class Autocomplete < Component
       DEFAULT_MAX_SUGGESTIONS = 6
 
@@ -64,8 +64,8 @@ module Charming
       # edits the text (resetting the highlight).
       def handle_key(event)
         case Charming.key_of(event)
-        when :escape then :cancelled
-        when :enter then [:submitted, submission_value]
+        when :escape then Result.cancelled
+        when :enter then Result.submitted(submission_value)
         when :up then move_selection(-1)
         when :down then move_selection(+1)
         else
@@ -108,10 +108,10 @@ module Charming
 
       def move_selection(delta)
         count = filtered_suggestions.length
-        return :handled if count.zero?
+        return Result.handled if count.zero?
 
         @selected_index = (selected_index + delta).clamp(0, count - 1)
-        :handled
+        Result.handled
       end
 
       def clamp_selection

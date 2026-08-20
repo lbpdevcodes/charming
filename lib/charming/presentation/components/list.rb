@@ -63,16 +63,16 @@ module Charming
         clamp_position
       end
 
-      # Handles key events. Returns `[:selected, item]` on Enter when an item is selected;
-      # otherwise delegates to the KeyboardHandler for navigation keys.
+      # Handles key events. Returns `Result.selected(item)` on Enter when an item is
+      # selected; otherwise delegates to the KeyboardHandler for navigation keys.
       def handle_key(event)
-        return [:selected, selected_item] if Charming.key_of(event) == :enter && selected_item
+        return Result.selected(selected_item) if Charming.key_of(event) == :enter && selected_item
 
         super
       end
 
       # Handles mouse events: a click within the visible window selects the clicked row.
-      # Returns :handled on a successful click, nil otherwise.
+      # Returns Result.handled on a successful click, nil otherwise.
       def handle_mouse(event)
         return nil unless @height
         return nil unless event.respond_to?(:click?) && event.click?
@@ -82,7 +82,7 @@ module Charming
 
         @selected_index = viewport_start + clicked
         clamp_position
-        :handled
+        Result.handled
       end
 
       # Returns the currently selected item, or nil when the list is empty.

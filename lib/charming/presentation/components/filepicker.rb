@@ -3,7 +3,7 @@
 module Charming
   module Components
     # Filepicker is a directory browser built on List. Enter descends into the
-    # highlighted directory or returns `[:selected, absolute_path]` for a file;
+    # highlighted directory or returns `Result.selected(absolute_path)` for a file;
     # Backspace (or the "../" entry) goes up, never above the configured root.
     # Dotfiles are hidden until `toggle_hidden`.
     class Filepicker < Component
@@ -63,14 +63,14 @@ module Charming
         return ascend if entry == PARENT_ENTRY
         return descend(entry.delete_suffix("/")) if entry.end_with?("/")
 
-        [:selected, File.join(current_dir, entry)]
+        Result.selected(File.join(current_dir, entry))
       end
 
       # Enters *name* under the current directory.
       def descend(name)
         @current_dir = File.join(current_dir, name)
         rebuild_list
-        :handled
+        Result.handled
       end
 
       # Moves to the parent directory, unless already at the root.
@@ -79,7 +79,7 @@ module Charming
 
         @current_dir = File.dirname(current_dir)
         rebuild_list
-        :handled
+        Result.handled
       end
 
       # Builds a fresh List over the current directory's entries.

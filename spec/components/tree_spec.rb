@@ -60,23 +60,23 @@ RSpec.describe Charming::Components::Tree do
     expect(tree.current_node[:label]).to eq("src")
   end
 
-  it "returns [:selected, node] on enter for a leaf" do
+  it "returns Result.selected(node) on enter for a leaf" do
     tree = described_class.new(nodes: nodes, cursor_index: 1)
     result = tree.handle_key(key(:enter))
-    expect(result.first).to eq(:selected)
-    expect(result.last[:label]).to eq("main.rb")
+    expect(result.kind).to eq(:selected)
+    expect(result.value[:label]).to eq("main.rb")
   end
 
   it "toggles a branch on enter" do
     tree = described_class.new(nodes: nodes) # cursor on src
-    expect(tree.handle_key(key(:enter))).to eq(:handled)
+    expect(tree.handle_key(key(:enter))).to eq(Charming::Components::Result.handled)
     expect(tree.render).not_to include("main.rb")
   end
 
   it "toggles a branch on click" do
     tree = described_class.new(nodes: nodes)
     event = Charming::Events::MouseEvent.new(button: 0, x: 0, y: 0)
-    expect(tree.handle_mouse(event)).to eq(:handled)
+    expect(tree.handle_mouse(event)).to eq(Charming::Components::Result.handled)
     expect(tree.render).not_to include("main.rb")
   end
 

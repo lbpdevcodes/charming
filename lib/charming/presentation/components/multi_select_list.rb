@@ -5,9 +5,9 @@ module Charming
     # MultiSelectList is a List variant where Space toggles per-item checkmarks and
     # Enter submits the checked set. Renders `[x]` / `[ ]` prefixes.
     #
-    # `handle_key` returns `[:submitted, [item, ...]]` on Enter, :handled for toggles
-    # and navigation, nil otherwise. *max_selections* optionally caps how many items
-    # can be checked at once.
+    # `handle_key` returns `Result.submitted([item, ...])` on Enter, Result.handled for
+    # toggles and navigation, nil otherwise. *max_selections* optionally caps how many
+    # items can be checked at once.
     class MultiSelectList < List
       # The set of selected (checked) item indices.
       attr_reader :selected_indices
@@ -31,7 +31,7 @@ module Charming
       def handle_key(event)
         case Charming.key_of(event)
         when :space then toggle_current
-        when :enter then [:submitted, selected_items]
+        when :enter then Result.submitted(selected_items)
         else
           # Bypass List#handle_key (its Enter means single-select); use its navigation.
           keyboard_navigation(event)
@@ -59,11 +59,11 @@ module Charming
         if selected_indices.include?(index)
           selected_indices.delete(index)
         else
-          return :handled if @max_selections && selected_indices.length >= @max_selections
+          return Result.handled if @max_selections && selected_indices.length >= @max_selections
 
           selected_indices << index
         end
-        :handled
+        Result.handled
       end
 
       # Navigation via the KeyboardHandler key actions (up/down/home/end and keymap aliases).
@@ -73,7 +73,7 @@ module Charming
         return nil unless action
 
         send(action)
-        :handled
+        Result.handled
       end
 
       # One row: checkbox, then the labeled item; highlighted row in selected style.

@@ -10,6 +10,8 @@ Charming gives terminal apps familiar application structure: routes, controllers
 
 Charming is still in its infancy and is under constant development. APIs, behavior, and generated app structure may change until the project reaches a stable `1.0` release.
 
+[API_POLICY.md](API_POLICY.md) defines what the 1.0 freeze covers: `Charming::Internal` is unversioned, and everything else follows semver from 1.0.
+
 ## Quick Start
 
 Install the Charming CLI gem on your machine:

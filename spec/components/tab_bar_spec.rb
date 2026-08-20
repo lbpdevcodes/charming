@@ -37,16 +37,16 @@ RSpec.describe Charming::Components::TabBar do
     expect(bar.selected_index).to eq(2)
   end
 
-  it "returns [:selected, index] on enter" do
+  it "returns Result.selected(index) on enter" do
     bar = described_class.new(tabs: tabs, selected_index: 1)
-    expect(bar.handle_key(key(:enter))).to eq([:selected, 1])
+    expect(bar.handle_key(key(:enter))).to eq(Charming::Components::Result.selected(1))
   end
 
   it "selects a tab on click" do
     bar = described_class.new(tabs: tabs)
     # " Files " is 7 wide + 2 separator → "Search" tab starts at column 9
     event = Charming::Events::MouseEvent.new(button: 0, x: 10, y: 0)
-    expect(bar.handle_mouse(event)).to eq(:handled)
+    expect(bar.handle_mouse(event)).to eq(Charming::Components::Result.handled)
     expect(bar.selected_index).to eq(1)
   end
 

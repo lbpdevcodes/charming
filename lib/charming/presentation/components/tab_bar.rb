@@ -8,8 +8,8 @@ module Charming
     #
     #   TabBar.new(tabs: ["Files", "Search", "Git"], selected_index: 0)
     #
-    # `handle_key` returns `[:selected, index]` on Enter, `:handled` for navigation keys,
-    # and nil otherwise.
+    # `handle_key` returns `Result.selected(index)` on Enter, Result.handled for
+    # navigation keys, and nil otherwise.
     class TabBar < Component
       include KeyboardHandler
 
@@ -42,15 +42,15 @@ module Charming
         @keymap = keymap
       end
 
-      # Returns `[:selected, index]` on Enter; navigation keys move the active tab.
+      # Returns `Result.selected(index)` on Enter; navigation keys move the active tab.
       def handle_key(event)
         return nil if tabs.empty?
-        return [:selected, selected_index] if Charming.key_of(event) == :enter
+        return Result.selected(selected_index) if Charming.key_of(event) == :enter
 
         super
       end
 
-      # Selects the clicked tab. Returns :handled when a tab was hit, nil otherwise.
+      # Selects the clicked tab. Returns Result.handled when a tab was hit, nil otherwise.
       def handle_mouse(event)
         return nil if tabs.empty?
         return nil unless event.respond_to?(:click?) && event.click?
@@ -59,7 +59,7 @@ module Charming
         return nil unless index
 
         @selected_index = index
-        :handled
+        Result.handled
       end
 
       # Renders the tabs on one row, the active tab in the selected style.

@@ -58,21 +58,21 @@ RSpec.describe Charming::Components::Table do
     it "moves selection down" do
       table = described_class.new(header: %w[Name Age], rows: %w[a b c])
 
-      expect(table.handle_key(key(:down))).to eq(:handled)
+      expect(table.handle_key(key(:down))).to eq(Charming::Components::Result.handled)
       expect(table.selected_index).to eq(1)
     end
 
     it "moves selection up" do
       table = described_class.new(header: %w[Name Age], rows: %w[a b c], selected_index: 2)
 
-      expect(table.handle_key(key(:up))).to eq(:handled)
+      expect(table.handle_key(key(:up))).to eq(Charming::Components::Result.handled)
       expect(table.selected_index).to eq(1)
     end
 
     it "supports vim navigation keys by default" do
       table = described_class.new(header: %w[Name Age], rows: %w[a b c])
 
-      expect(table.handle_key(key(:j))).to eq(:handled)
+      expect(table.handle_key(key(:j))).to eq(Charming::Components::Result.handled)
       table.handle_key(key(:k))
 
       expect(table.selected_index).to eq(0)
@@ -121,7 +121,7 @@ RSpec.describe Charming::Components::Table do
       table = described_class.new(header: %w[Name Age], rows: %w[a b c])
 
       result = table.handle_key(key(:enter))
-      expect(result).to eq([:selected, "a"])
+      expect(result).to eq(Charming::Components::Result.selected("a"))
     end
 
     it "returns row data on enter" do
@@ -132,7 +132,7 @@ RSpec.describe Charming::Components::Table do
       )
 
       result = table.handle_key(key(:enter))
-      expect(result).to eq([:selected, ["Bob", 25]])
+      expect(result).to eq(Charming::Components::Result.selected(["Bob", 25]))
     end
 
     it "returns nil rows when empty" do
@@ -316,7 +316,7 @@ RSpec.describe Charming::Components::Table do
       )
 
       result = table.handle_mouse(mouse(x: 5, y: 4))
-      expect(result).to eq(:handled)
+      expect(result).to eq(Charming::Components::Result.handled)
       expect(table.selected_index).to eq(2)
     end
 
@@ -360,7 +360,7 @@ RSpec.describe Charming::Components::Table do
 
       # Click on the body row (HEADER_HEIGHT = 2, single row sits at y = 2).
       result = table.handle_mouse(mouse(x: 0, y: 2))
-      expect(result).to eq(:handled)
+      expect(result).to eq(Charming::Components::Result.handled)
       expect(table.selected_index).to eq(0)
     end
 

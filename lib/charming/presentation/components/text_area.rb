@@ -37,12 +37,12 @@ module Charming
         true
       end
 
-      # Routes key events to the appropriate cursor/text mutation. Returns :handled when the
-      # event was consumed, nil otherwise.
+      # Routes key events to the appropriate cursor/text mutation. Returns Result.handled
+      # when the event was consumed, nil otherwise.
       def handle_key(event)
         key = Charming.key_of(event)
-        return :handled if newline_event?(event) && insert("\n")
-        return :handled if character_event?(event) && insert(event.char)
+        return Result.handled if newline_event?(event) && insert("\n")
+        return Result.handled if character_event?(event) && insert(event.char)
 
         case key
         when :left then move_left
@@ -58,15 +58,15 @@ module Charming
         else return nil
         end
 
-        :handled
+        Result.handled
       end
 
       # Inserts pasted text at the cursor. Newlines are preserved; other control
-      # characters (and CRLF carriage returns) are stripped. Returns :handled.
+      # characters (and CRLF carriage returns) are stripped. Returns Result.handled.
       def handle_paste(event)
         sanitized = event.text.to_s.tr("\r", "").gsub(/[^[:print:]\n]/, "")
         insert(sanitized) unless sanitized.empty?
-        :handled
+        Result.handled
       end
 
       # Renders the visible portion of the text buffer (scrolled to `offset`), with each

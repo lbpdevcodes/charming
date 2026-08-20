@@ -16,6 +16,7 @@ module Charming
 
         # Handles the standard confirm keys: space toggles, y/right sets to true, n/left
         # sets to false, and a space character (when the event exposes `char`) also toggles.
+        # Returns Result.handled when consumed, nil otherwise.
         def handle_key(event)
           case Charming.key_of(event)
           when :space
@@ -29,7 +30,7 @@ module Charming
 
             toggle
           end
-          :handled
+          Result.handled
         end
 
         # Returns ["must be accepted"] when required and the value is not true, otherwise

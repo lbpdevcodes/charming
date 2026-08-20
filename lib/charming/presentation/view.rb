@@ -5,11 +5,11 @@ module Charming
   # rendering hooks, layout composition helpers (`row`, `column`, `render_component`, `yield_content`),
   # and access to controller theme, style, and focus state from within views.
   class View
-    # Initializes the view with named assigns injected as instance-local accessor methods via
-    # `define_singleton_method`. Called when a controller instantiates a view for rendering.
+    # Initializes the view with named assigns. Assign keys become private reader
+    # methods via method_missing (see below) — existing methods always win, so a
+    # `title:` assign never shadows a `def title` helper.
     def initialize(**assigns)
       @assigns = assigns
-      define_assign_readers
     end
 
     # Returns all view assigns as a hash, used by layouts to compose the full template (content + screen + controller).
@@ -124,14 +124,18 @@ module Charming
       style_object ? style_object.render(value) : value
     end
 
-    # Dynamically defines read-only accessor methods for each assign key as singleton methods on self.
-    # Skips keys where the view already responds (controller methods take precedence).
-    def define_assign_readers
-      assigns.each_key do |name|
-        next if respond_to?(name, true)
+    # Resolves assign keys as zero-argument private readers. Real methods take
+    # precedence (method_missing only fires when nothing defined the message).
+    def method_missing(name, *args, &block)
+      return assigns.fetch(name) if args.empty? && block.nil? && assigns.key?(name)
 
-        define_singleton_method(name) { assigns.fetch(name) }
-      end
+      super
+    end
+
+    # Lets `respond_to?` answer true for assign names, matching the readers
+    # method_missing provides.
+    def respond_to_missing?(name, include_private = false)
+      assigns.key?(name) || super
     end
 
     def layout_screen

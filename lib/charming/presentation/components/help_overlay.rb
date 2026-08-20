@@ -11,7 +11,7 @@ module Charming
     #
     #   HelpOverlay.new(bindings: {"q" => "Quit", "ctrl+p" => "Command palette"})
     #
-    # Any key dismisses it (`handle_key` returns :cancelled).
+    # Any key dismisses it (`handle_key` returns Result.cancelled).
     class HelpOverlay < Component
       DEFAULT_TITLE = "Keyboard Shortcuts"
       DEFAULT_WIDTH = 44
@@ -40,7 +40,7 @@ module Charming
 
       # Any key dismisses the overlay.
       def handle_key(_event)
-        :cancelled
+        Result.cancelled
       end
 
       # Renders the bindings table inside a titled modal.

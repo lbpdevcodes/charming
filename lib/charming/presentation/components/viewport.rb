@@ -62,14 +62,14 @@ module Charming
       end
 
       # Handles mouse events: scroll wheel adjusts the row offset, click moves the top
-      # visible row to the clicked position. Returns :handled on success.
+      # visible row to the clicked position. Returns Result.handled on success.
       def handle_mouse(event)
         return nil unless height
 
         if event.scroll?
           scroll_delta = (event.button_name == :scroll_up) ? -1 : 1
           position.move_to(offset + scroll_delta, bounds)
-          return :handled
+          return Result.handled
         end
 
         return nil unless event.click?
@@ -78,7 +78,7 @@ module Charming
         return nil if clicked_row < 0 || clicked_row >= viewport_height
 
         position.move_to(offset + clicked_row, bounds)
-        :handled
+        Result.handled
       end
 
       private

@@ -6,8 +6,8 @@ module Charming
     # hashes: `{label: "src", children: [...], expanded: true}` — `children` and
     # `expanded` are optional. Navigation: up/down move the cursor through *visible*
     # nodes, right expands, left collapses (or jumps to the parent), Enter returns
-    # `[:selected, node]` for leaves and toggles branches. Mouse clicks move the cursor
-    # and toggle branches.
+    # `Result.selected(node)` for leaves and toggles branches. Mouse clicks move the
+    # cursor and toggle branches.
     class Tree < Component
       include KeyboardHandler
 
@@ -43,7 +43,7 @@ module Charming
         clamp_cursor
       end
 
-      # Enter selects a leaf (`[:selected, node]`) or toggles a branch. Navigation keys
+      # Enter selects a leaf (`Result.selected(node)`) or toggles a branch. Navigation keys
       # are handled by KeyboardHandler.
       def handle_key(event)
         node = current_node
@@ -63,7 +63,7 @@ module Charming
         @cursor_index = clicked
         node = current_node
         toggle(node) if branch?(node)
-        :handled
+        Result.handled
       end
 
       # The node under the cursor (a node hash), or nil for an empty tree.
@@ -113,10 +113,10 @@ module Charming
       end
 
       def select_or_toggle(node)
-        return [:selected, node] unless branch?(node)
+        return Result.selected(node) unless branch?(node)
 
         toggle(node)
-        :handled
+        Result.handled
       end
 
       def toggle(node)

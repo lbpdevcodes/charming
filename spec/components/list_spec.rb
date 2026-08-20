@@ -15,7 +15,7 @@ RSpec.describe Charming::Components::List do
   it "moves selection down and up" do
     list = described_class.new(items: %w[Open Run Quit])
 
-    expect(list.handle_key(key(:down))).to eq(:handled)
+    expect(list.handle_key(key(:down))).to eq(Charming::Components::Result.handled)
     list.handle_key(key(:down))
     list.handle_key(key(:up))
 
@@ -26,7 +26,7 @@ RSpec.describe Charming::Components::List do
   it "supports vim navigation keys by default" do
     list = described_class.new(items: %w[Open Run Quit])
 
-    expect(list.handle_key(key(:j))).to eq(:handled)
+    expect(list.handle_key(key(:j))).to eq(Charming::Components::Result.handled)
     list.handle_key(key(:k))
 
     expect(list.selected_index).to eq(0)
@@ -42,7 +42,7 @@ RSpec.describe Charming::Components::List do
   it "supports custom navigation keymaps" do
     list = described_class.new(items: %w[Open Run Quit], keymap: {down: :s})
 
-    expect(list.handle_key(key(:s))).to eq(:handled)
+    expect(list.handle_key(key(:s))).to eq(Charming::Components::Result.handled)
     expect(list.selected_index).to eq(1)
   end
 
@@ -70,7 +70,7 @@ RSpec.describe Charming::Components::List do
   it "returns the selected item on enter" do
     list = described_class.new(items: %w[Open Quit], selected_index: 1)
 
-    expect(list.handle_key(key(:enter))).to eq([:selected, "Quit"])
+    expect(list.handle_key(key(:enter))).to eq(Charming::Components::Result.selected("Quit"))
   end
 
   it "ignores unsupported keys" do
@@ -102,7 +102,7 @@ RSpec.describe Charming::Components::List do
     list = described_class.new(items: %w[One Two Three Four Five], selected_index: 0, height: 3)
 
     mouse = Charming::Events::MouseEvent.new(button: 0, x: 5, y: 2)
-    expect(list.handle_mouse(mouse)).to eq(:handled)
+    expect(list.handle_mouse(mouse)).to eq(Charming::Components::Result.handled)
     expect(list.selected_index).to eq(2)
   end
 

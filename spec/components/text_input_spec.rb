@@ -16,7 +16,7 @@ RSpec.describe Charming::Components::TextInput do
 
     handled = input.handle_key(key(:b, char: "b"))
 
-    expect(handled).to eq(:handled)
+    expect(handled).to eq(Charming::Components::Result.handled)
     expect(input.value).to eq("abc")
     expect(input.cursor).to eq(2)
     expect(input.render).to eq("ab|c")
@@ -66,14 +66,14 @@ RSpec.describe Charming::Components::TextInput do
 
     result = input.handle_key(key(:enter))
 
-    expect(result).to eq([:submitted, "buy milk"])
+    expect(result).to eq(Charming::Components::Result.submitted("buy milk"))
     expect(input.value).to eq("buy milk")
   end
 
   it "submits an empty value on Enter" do
     input = described_class.new
 
-    expect(input.handle_key(key(:enter))).to eq([:submitted, ""])
+    expect(input.handle_key(key(:enter))).to eq(Charming::Components::Result.submitted(""))
   end
 
   it "ignores unsupported keys" do

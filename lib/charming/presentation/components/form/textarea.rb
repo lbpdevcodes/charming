@@ -27,7 +27,7 @@ module Charming
         end
 
         # Forwards key events to the underlying TextArea, syncing the value, cursor, offset,
-        # and preferred column back into the form state. Returns :handled when consumed.
+        # and preferred column back into the form state. Returns Result.handled when consumed.
         def handle_key(event)
           forward_to_text_area(:handle_key, event)
         end
@@ -51,13 +51,13 @@ module Charming
         # event, persists the value, cursor, offset, and preferred column into form state.
         def forward_to_text_area(message, event)
           area = text_area
-          return nil unless area.public_send(message, event) == :handled
+          return nil unless area.public_send(message, event)&.handled?
 
           state[:values][name] = area.value
           field_state[:cursor] = area.cursor
           field_state[:offset] = area.offset
           field_state[:preferred_column] = area.preferred_column
-          :handled
+          Result.handled
         end
 
         # The default value for a freshly-bound field is the *value* passed at construction.

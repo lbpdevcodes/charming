@@ -75,6 +75,24 @@ RSpec.describe "component event dispatch" do
       expect(press(controller).body).to eq("cleared")
     end
 
+    it "dispatches Result forms exactly like the legacy forms" do
+      controller = build_controller(slot: :query, result: Charming::Components::Result.submitted("ruby")) do
+        on_submit :query, :run_search
+
+        def run_search(value)
+          render "searched #{value}"
+        end
+      end
+
+      expect(press(controller).body).to eq("searched ruby")
+    end
+
+    it "treats a Result.handled component result like legacy :handled" do
+      controller = build_controller(slot: :query, result: Charming::Components::Result.handled)
+
+      expect(press(controller).body).to eq("base")
+    end
+
     it "inherits registrations to subclass controllers" do
       parent = build_controller(slot: :query, result: [:submitted, "ruby"]) do
         on_submit :query, :run_search

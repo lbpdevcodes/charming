@@ -5,7 +5,8 @@ module Charming
     # CommandPalette renders a fuzzy-searchable command picker UI. It wraps a TextInput for search
     # input and a List for result display, dispatching key events between them. Users type to filter
     # the registered commands by label match, navigate with up/down/home/end keys (delegated to List),
-    # confirm a selection with Enter (returns [:selected, command]), or cancel with Escape (returns :cancelled).
+    # confirm a selection with Enter (returns Result.selected(command)), or cancel with Escape (returns
+    # Result.cancelled).
     # State is serializable as a hash of value/cursor/selected_index for session persistence.
     class CommandPalette < Component
       Command = Data.define(:label, :value)
@@ -49,14 +50,14 @@ module Charming
       end
 
       # Handles key events by routing them to the appropriate sub-component: Escape kills the
-      # palette returning :cancelled; up/down/home/end keys go to the List selection handler
+      # palette returning Result.cancelled; up/down/home/end keys go to the List selection handler
       # via handle_list_key; all other keys (including typed characters) are passed to the TextInput
       # which manages cursor position and input filtering. If a list key match fails, falls through
-      # to the TextInput handler. Returns nil/nil if no handler consumed the event, or :cancelled when
-      # Escape is pressed.
+      # to the TextInput handler. Returns nil if no handler consumed the event, or Result.cancelled
+      # when Escape is pressed.
       def handle_key(event)
         key = Charming.key_of(event)
-        return :cancelled if key == :escape
+        return Result.cancelled if key == :escape
 
         return handle_list_key(event) if list_key?(key)
 
@@ -75,17 +76,18 @@ module Charming
       attr_reader :height, :list
 
       # Delegates key handling entirely to the internal List widget, which manages up/down/home/end selection.
-      # Returns whatever the List's handle_key returns (typically nil or the symbol from the subclass).
+      # Returns whatever the List's handle_key returns (a Result or nil).
       def handle_list_key(event)
         list.handle_key(event)
       end
 
       # Passes the key event to the TextInput for cursor position and search text management.
-      # If the input returns :handled, rebuilds the List so that filtering is re-evaluated against
-      # the new input value. Returns nil/nil if no handler consumed the event.
+      # If the input returns Result.handled, rebuilds the List so that filtering is re-evaluated
+      # against the new input value. Returns the input's Result, or nil when it did not consume
+      # the event.
       def handle_input_key(event)
         result = input.handle_key(event)
-        @list = build_list if result == :handled
+        @list = build_list if result&.handled?
         result
       end
 

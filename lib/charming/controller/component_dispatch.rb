@@ -30,9 +30,12 @@ module Charming
       end
 
       # Translates a component `handle_key` *result* into a controller action call.
-      # Falls back to a default render when no handler exists (production only).
+      # Legacy return forms (`:handled`, `:cancelled`, `[:submitted, v]`,
+      # `[:selected, v]`) normalize to Components::Result here; components in the wild
+      # may return either form. Falls back to a default render when no handler exists
+      # (production only).
       def dispatch_component_result(slot, result)
-        action, arguments = component_result_action(slot, result)
+        action, arguments = component_result_action(slot, Components::Result.normalize(result))
         action ? controller.send(action, *arguments) : controller.send(:render_default_action)
         controller.send(:render_default_action) unless controller.send(:response)
       end
@@ -72,23 +75,14 @@ module Charming
         controller.event
       end
 
-      # Resolves which controller action (if any) corresponds to the *result* from a component.
+      # Resolves which controller action (if any) corresponds to the normalized *result*.
       def component_result_action(slot, result)
-        case result
+        case result.kind
         when :cancelled
           component_action(slot, :cancelled)
-        when Array
-          component_array_action(slot, result)
+        when :submitted, :selected
+          component_action(slot, result.kind, result.value)
         end
-      end
-
-      # Handles array-shaped component results, currently `[:submitted, value]` and `[:selected, value]`.
-      def component_array_action(slot, result)
-        event_name, value = result
-        return component_action(slot, :submitted, value) if event_name == :submitted
-        return component_action(slot, :selected, value) if event_name == :selected
-
-        nil
       end
 
       # Returns `[action, arguments]` for the component event in *slot* with *suffix*

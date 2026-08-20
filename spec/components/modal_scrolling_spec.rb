@@ -17,7 +17,7 @@ RSpec.describe Charming::Components::Modal do
 
     it "scrolls down on key events and exposes the offset" do
       modal = described_class.new(content: long_content, max_body_height: 5)
-      expect(modal.handle_key(key(:down))).to eq(:handled)
+      expect(modal.handle_key(key(:down))).to eq(Charming::Components::Result.handled)
       expect(modal.scroll_offset).to eq(1)
     end
 
