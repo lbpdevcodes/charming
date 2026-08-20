@@ -11,8 +11,12 @@ module Charming
       # Returns the application session hash for this controller. The session holds state that
       # must outlive a screen: `state` objects, app-global UI state (focus rings, sidebar index,
       # command palette), and values persisted across restarts via `persist_session`.
+      # In development and test the hash is wrapped in an Internal::SessionGuard so access
+      # from a task executor thread raises CrossThreadAccess; production returns the raw hash.
       def session
-        application.session
+        return application.session if Charming.env.production?
+
+        @session_guard ||= Internal::SessionGuard.new(application.session, self)
       end
 
       # Stores the named layout panes from the latest render so mouse events can be hit-tested
@@ -73,10 +77,16 @@ module Charming
       # task executor; its return value (or any raised exception) is delivered to the controller
       # as a TaskEvent dispatched to the matching `on_task` handler.
       #
-      # Blocks that accept an argument receive a Tasks::Progress reporter whose `report`
-      # calls dispatch the matching `on_task_progress` handler. *timeout:* (seconds)
-      # cancels the task with Tasks::Cancelled when exceeded.
-      def run_task(name, timeout: nil, &block)
+      # Blocks that accept an argument receive a Tasks::Context: `ctx[key]` reads inputs from
+      # the *with:* hash (deep-frozen at submit time) and `ctx.report(...)` dispatches the
+      # matching `on_task_progress` handler. *timeout:* (seconds) cancels the task with
+      # Tasks::Cancelled when exceeded.
+      #
+      # Task blocks receive data in via *with:* and return data out as the block value; they
+      # touch nothing else. The `on_task` handler on the loop thread is the only place task
+      # results become state.
+      def run_task(name, timeout: nil, with: {}, &block)
+        block = task_block_wrapper(block, Internal::DeepFreeze.call(with))
         return application.task_executor.submit(name, timeout: timeout, &block) if timeout
 
         # Without a timeout, use the plain signature so simple custom executors
@@ -89,6 +99,19 @@ module Charming
       def cancel_task(name)
         executor = application.task_executor
         executor.cancel(name) if executor.respond_to?(:cancel)
+      end
+
+      private
+
+      # Wraps the task block so it receives a Tasks::Context carrying the *with* data
+      # plus the executor's progress reporter. The wrapper's arity is always 1, so the
+      # executor hands it the reporter; the original block's arity decides whether the
+      # context is passed on (lambdas stay strict).
+      def task_block_wrapper(block, data)
+        proc do |progress|
+          context = Tasks::Context.new(data, progress)
+          block.arity.zero? ? block.call : block.call(context)
+        end
       end
     end
   end

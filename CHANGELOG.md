@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `run_task(name, with: {...})`: task inputs travel in an explicit,
+  deep-frozen hash. The block receives a `Charming::Tasks::Context` —
+  `ctx[:key]` reads inputs, `ctx.report(...)` streams progress. Mutating a
+  `with:` value inside the task raises `FrozenError`.
+- `Charming::CrossThreadAccess`: raised when a task block calls `render`,
+  `render_view`, `render_template`, `navigate`, `quit`, `session`, `focus`,
+  or `component_for` from an executor thread, in development and test.
+  Production logs a warning instead. (`session`'s checking wrapper is
+  dev/test-only; production returns the raw hash.)
 - `Charming::DoubleRenderError`: raised when a dispatch sets the response
   twice. `render`, `render_view`, `render_template`, `navigate`, and `quit`
   each assign the response; a second assignment raises with a message naming

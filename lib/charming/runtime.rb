@@ -35,6 +35,7 @@ module Charming
       setup_terminal
       install_signal_handlers
       install_exit_hook
+      @controller.capture_loop_thread!
       with_raw_input do
         render(initial_response)
         @event_loop.run { |event, more_ready| process(event, flush: !more_ready) }

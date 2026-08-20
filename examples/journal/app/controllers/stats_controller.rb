@@ -26,13 +26,16 @@ module Journal
       stats.export_current = 0
       stats.export_total = entries.length
 
-      run_task(:export) do |progress|
+      # Data goes in via `with:` (deep-frozen at submit time); results come out as
+      # the block value and land in export_finished on the loop thread.
+      run_task(:export, with: {entries: entries}) do |ctx|
+        entries = ctx[:entries]
         path = File.expand_path(EXPORT_PATH, Dir.pwd)
         FileUtils.mkdir_p(File.dirname(path))
         File.open(path, "w") do |file|
           entries.each_with_index do |entry, index|
             file.puts "# #{entry.title}\n\n_#{entry.created_at.strftime("%Y-%m-%d")} · #{entry.mood}_\n\n#{entry.body}\n\n---\n"
-            progress.report(index + 1, of: entries.length, message: entry.title)
+            ctx.report(index + 1, of: entries.length, message: entry.title)
             sleep 0.15 # visible progress in the live demo
           end
         end

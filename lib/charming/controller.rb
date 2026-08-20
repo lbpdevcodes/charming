@@ -46,6 +46,30 @@ module Charming
       @screen = screen || Screen.new(width: 80, height: 24)
       @route = route
       @response = nil
+      @loop_thread = Thread.current
+    end
+
+    # Records the loop thread that owns this controller. Construction captures the
+    # constructing thread; the Runtime re-captures when the event loop starts, covering
+    # runtimes built on one thread and run on another. Internal — called by Runtime.
+    def capture_loop_thread!
+      @loop_thread = Thread.current
+    end
+
+    # Asserts the current thread is this controller's loop thread. The mutation funnels
+    # (session, render/navigate/quit, focus, component_for) call this so task-block
+    # access from an executor thread trips immediately. Raises CrossThreadAccess in
+    # development and test; logs a warning in production. Internal — called by the
+    # funnels and the session guard.
+    def assert_loop_thread!(operation)
+      return if Thread.current.equal?(@loop_thread)
+
+      message = "A task thread called #{self.class.name || "an anonymous controller"}##{operation}. " \
+        "Task blocks receive data in via `with:` and return data out as the block value. " \
+        "Touch the controller, session, and components only on the loop thread — in the `on_task` handler."
+      raise CrossThreadAccess, message unless Charming.env.production?
+
+      logger.warn(message)
     end
 
     # Lifecycle hook called once after this controller becomes the active screen's
@@ -114,17 +138,20 @@ module Charming
     # registered while rendering (e.g. image transmissions) are collected by the Runtime around the
     # whole dispatch and attached to the response.
     def render(body = "", **assigns)
+      assert_loop_thread!(:render)
       body = view_body(default_template_name(body), **assigns) if body.is_a?(Symbol)
       assign_response(Response.render(render_with_layout(body)), "render")
     end
 
     def render_view(view_class, **assigns)
+      assert_loop_thread!(:render_view)
       assign_response(Response.render(render_with_layout(view_class.new(**template_assigns(assigns)))), "render_view(#{view_class})")
     end
 
     # Renders a template from `app/views` by name, applying the controller's layout. *name* is the
     # template path (e.g., "home/show") and additional keyword *assigns* are forwarded to the view.
     def render_template(name, **assigns)
+      assert_loop_thread!(:render_template)
       assign_response(Response.render(render_with_layout(template_body(name, **assigns))), "render_template(#{name.inspect})")
     end
 
@@ -147,11 +174,13 @@ module Charming
     # Navigates to the screen registered under *name* in config/routes.rb, passing
     # *params* through to the target controller (e.g. `navigate :project, id: project.id`).
     def navigate(name, **params)
+      assert_loop_thread!(:navigate)
       assign_response(Response.navigate(name, **params), "navigate to :#{name}")
     end
 
     # Exits the application — sets a quit response that terminates the event loop.
     def quit
+      assert_loop_thread!(:quit)
       assign_response(Response.quit, "quit")
     end
 
@@ -165,6 +194,7 @@ module Charming
     # controller — or nil. Every dispatch path fetches components through here, so the
     # slot convention is greppable in one place.
     def component_for(slot)
+      assert_loop_thread!(:component_for)
       return nil unless respond_to?(slot, true)
 
       send(slot)
