@@ -8,6 +8,7 @@ RSpec.describe Journal::StatsController do
   include Charming::TestHelper
 
   let(:app) { Journal::Application.new }
+  let(:ctrl) { build_controller(described_class, app: app) }
 
   before do
     Journal::Entry.create!(title: "One", mood: "good", body: "a")
@@ -16,7 +17,7 @@ RSpec.describe Journal::StatsController do
   end
 
   it "renders mood counts and totals" do
-    response = build_controller(described_class, app: app).dispatch(:show)
+    response = ctrl.dispatch(:show)
     expect(response).to render_text("Writing stats")
     expect(response).to render_text("3 entries")
     expect(response).to render_text("good (2)")
@@ -27,8 +28,8 @@ RSpec.describe Journal::StatsController do
     queue = Thread::Queue.new
     app.task_executor = Charming::Tasks::InlineExecutor.new(queue)
 
-    build_controller(described_class, app: app).dispatch(:show)
-    press(described_class, "x", app: app)
+    ctrl.dispatch(:show)
+    press(ctrl, "x")
 
     events = []
     events << queue.pop(true) until queue.empty?

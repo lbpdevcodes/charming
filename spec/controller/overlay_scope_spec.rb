@@ -41,8 +41,8 @@ RSpec.describe "Overlay focus scopes capture keys" do
 
   def press(key)
     OverlayScopeSpecController
-      .new(application: application, event: Charming::Events::KeyEvent.new(key: key))
-      .dispatch_key
+      .new(application: application)
+      .dispatch_key(Charming::Events::KeyEvent.new(key: key))
   end
 
   it "suppresses content key bindings while a modal scope is open" do

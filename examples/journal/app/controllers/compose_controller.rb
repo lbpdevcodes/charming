@@ -58,20 +58,20 @@ module Journal
       @editing_entry ||= Entry.find_by(id: params[:id])
     end
 
-    # Form state persists in the session across dispatches; when switching between
-    # "new" and "edit" (or editing a different entry) the stale draft must be cleared
-    # so the form re-seeds from the right defaults.
+    # Form state lives on the controller instance now; when switching between "new" and
+    # "edit" (or editing a different entry) the stale draft must be cleared so the form
+    # re-seeds from the right defaults. The mode itself is screen-lifetime, so an ivar.
     def prepare_form_state
       mode = editing_entry ? "edit-#{editing_entry.id}" : "new"
-      return if session[:compose_mode] == mode
+      return if @compose_mode == mode
 
-      session[:compose_mode] = mode
-      session[:forms]&.delete(:entry)
+      @compose_mode = mode
+      reset_form(:entry)
     end
 
     def reset_form_state
-      session.delete(:compose_mode)
-      session[:forms]&.delete(:entry)
+      @compose_mode = nil
+      reset_form(:entry)
     end
 
     def persist_entry(values)

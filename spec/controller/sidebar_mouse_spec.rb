@@ -26,41 +26,36 @@ RSpec.describe "Sidebar mouse navigation" do
     Charming::Events::MouseEvent.new(button: 0, x: x, y: y)
   end
 
-  def controller_for(event)
-    SidebarMouseSpecController.new(application: app, event: event)
-  end
-
-  def register_sidebar_target
-    controller_for(nil).register_mouse_targets([
-      {name: :sidebar, rect: rect, inner_rect: inner_rect}
-    ])
+  # One persistent controller with the sidebar pane registered from a render.
+  def controller
+    @controller ||= SidebarMouseSpecController.new(application: app).tap do |ctrl|
+      ctrl.register_mouse_targets([
+        {name: :sidebar, rect: rect, inner_rect: inner_rect}
+      ])
+    end
   end
 
   it "navigates to the clicked route row" do
-    register_sidebar_target
     # nav rows start at inner_rect.y + sidebar_nav_offset = 2 + 2 = 4; row 1 = Settings
-    response = controller_for(click(3, 5)).dispatch_mouse
+    response = controller.dispatch_mouse(click(3, 5))
 
     expect(response.navigate?).to be true
     expect(response.name).to eq(:settings)
   end
 
   it "focuses the sidebar when clicking non-row sidebar space" do
-    register_sidebar_target
-    controller_for(click(3, 2)).dispatch_mouse # the title row
+    controller.dispatch_mouse(click(3, 2)) # the title row
 
-    expect(controller_for(nil).sidebar_focused?).to be true
+    expect(controller.sidebar_focused?).to be true
   end
 
   it "ignores clicks outside the sidebar" do
-    register_sidebar_target
-    response = controller_for(click(50, 5)).dispatch_mouse
+    response = controller.dispatch_mouse(click(50, 5))
     expect(response).to be_nil
   end
 
   it "updates the sidebar index to the clicked row" do
-    register_sidebar_target
-    controller_for(click(3, 5)).dispatch_mouse
+    controller.dispatch_mouse(click(3, 5))
     expect(app.session[:sidebar_index]).to eq(1)
   end
 end

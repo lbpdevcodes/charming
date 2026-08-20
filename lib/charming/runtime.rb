@@ -24,6 +24,7 @@ module Charming
         event_loop: @event_loop,
         bindings: -> { @route.controller_class.timer_bindings }
       )
+      enter_controller
     end
 
     # Runs the event loop: enters alt-screen, dispatches incoming events
@@ -38,6 +39,7 @@ module Charming
         render(initial_response)
         @event_loop.run { |event, more_ready| process(event, flush: !more_ready) }
       ensure
+        exit_controller
         restore_signal_handlers
         @task_executor&.shutdown(timeout: 2.0)
         @application.save_session if @application.respond_to?(:save_session)
@@ -213,38 +215,48 @@ module Charming
     # Dispatches an action on the current route's controller with an optional event.
     # Entry point from the event loop into controllers.
     def dispatch(action, event: nil)
-      controller(event: event).dispatch(action)
+      @controller.dispatch(action, event: event)
     end
 
     # Dispatches a key press to the current route's controller.
     def dispatch_key(event)
-      controller(event: event).dispatch_key
+      @controller.dispatch_key(event)
     end
 
     # Dispatches a timer tick to the current route's controller.
     def dispatch_timer(event)
-      controller(event: event).dispatch_timer
+      @controller.dispatch_timer(event)
     end
 
     # Dispatches an async task result to the current route's controller.
     def dispatch_task(event)
-      controller(event: event).dispatch_task
+      @controller.dispatch_task(event)
     end
 
     # Dispatches a task progress report to the current route's controller.
     def dispatch_task_progress(event)
-      controller(event: event).dispatch_task_progress
+      @controller.dispatch_task_progress(event)
     end
 
     # Dispatches a mouse action (click, drag, scroll) to the current route's controller.
     def dispatch_mouse(event)
-      controller(event: event).dispatch_mouse
+      @controller.dispatch_mouse(event)
     end
 
-    # Instantiates a fresh controller for the active route, passing the application, current *event*,
-    # route params, screen dimensions, and route object. Called by every dispatch path.
-    def controller(event: nil)
-      @route.controller_class.new(application: @application, event: event, params: @route.params, screen: screen, route: @route)
+    # Constructs the controller for the current route and runs its screen_entered hook.
+    # The instance lives until the next navigation (or quit), so controller ivars hold
+    # screen-lifetime state.
+    def enter_controller
+      @controller = @route.controller_class.new(
+        application: @application, params: @route.params, screen: screen, route: @route
+      )
+      @controller.screen_entered
+    end
+
+    # Runs the current controller's screen_exited hook and releases it.
+    def exit_controller
+      @controller&.screen_exited
+      @controller = nil
     end
 
     # Type-based dispatcher: routes resize, task, progress, timer, mouse, paste, and key
@@ -264,35 +276,38 @@ module Charming
     # Dispatches a terminal focus change to the controller's optional `focus_changed`
     # action. Ignored when the controller doesn't define one.
     def dispatch_focus_change(event)
-      ctrl = controller(event: event)
-      return nil unless ctrl.respond_to?(:focus_changed)
+      return nil unless @controller.respond_to?(:focus_changed)
 
-      ctrl.dispatch(:focus_changed)
+      @controller.dispatch(:focus_changed, event: event)
     end
 
     # Dispatches pasted text to the current route's controller.
     def dispatch_paste(event)
-      controller(event: event).dispatch_paste
+      @controller.dispatch_paste(event)
     end
 
-    # Dispatches a resize event: updates screen dimensions and re-renders the current action.
+    # Dispatches a resize event: updates screen dimensions on the live controller and
+    # re-renders the current action.
     # The renderer's cached previous frame is invalidated and the backend is cleared so the
     # new-dimension frame paints onto a clean alt-screen instead of overlaying stale rows.
     def dispatch_resize(event)
       @screen = Screen.new(width: event.width, height: event.height)
       @renderer.invalidate if @renderer.respond_to?(:invalidate)
       @backend.clear if @backend.respond_to?(:clear)
+      @controller.update_screen(@screen)
       dispatch(@route.action, event: event)
     end
 
-    # Follows navigation responses: resolves the new route from the router,
-    # reschedules the event loop's timers for the new controller, and
+    # Follows navigation responses: discards the current controller, resolves and enters
+    # the new route, reschedules the event loop's timers for the new controller, and
     # dispatches that route's action.
     def resolve_response(response)
       return response unless response.navigate?
 
+      exit_controller
       @route = resolve_route(response.name, response.params)
       @event_loop.reset_timers(autostart_timer_bindings)
+      enter_controller
       dispatch(@route.action)
     end
 

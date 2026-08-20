@@ -37,7 +37,8 @@ module Charming
       end
 
       # Returns the index of the currently selected route in `sidebar_routes`, defaulting to the
-      # active route when the session index is unset.
+      # active route when the session index is unset. Stored in the session: the sidebar cursor
+      # is app-global — it should keep its position as the user moves between screens.
       def sidebar_index
         session[:sidebar_index] || current_route_index
       end

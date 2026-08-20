@@ -65,9 +65,11 @@ module Journal
       navigate :entry, id: entry.id
     end
 
-    # The selectable entry list, restored from session state each dispatch.
+    # The selectable entry list. Rebuilt each dispatch, not memoized: a memoized List
+    # would keep serving stale items after records change. Selection survives via
+    # entries_state; the items must always reflect the database.
     def entries
-      @entries ||= Charming::Components::List.new(
+      Charming::Components::List.new(
         items: Entry.recent_first.to_a,
         selected_index: entries_state.selected_index,
         height: [screen.height - 10, 3].max,

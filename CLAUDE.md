@@ -52,7 +52,7 @@ The framework source under `lib/charming/` is organized as:
 
 ## Critical invariants
 
-1. **Controllers are ephemeral.** The Runtime instantiates a fresh controller per event/dispatch. Never store state on `self` — put it in an `ApplicationState` object retrieved through `Controller#state(:name, StateClass)`.
+1. **Controllers are persistent per screen.** The Runtime constructs one controller instance when a route is entered and dispatches every event for that screen at it. Ivars hold screen-lifetime state; `state(name, Klass)` objects (in `session`) hold app-lifetime state; `persist_session` covers restart-lifetime. Navigation discards the instance (fresh one on return).
 2. **Components inherit `View`.** They share `assigns`, helpers (`text`, `box`, `row`, `column`, `render_component`), and `render`; they don't have an independent lifecycle.
 3. **Interactive components signal back via `handle_key` return values**: `:handled`, `[:selected, obj]`, `:cancelled`, or `nil` (not handled).
 4. **Command palette key events take priority** over controller `key` bindings while open.

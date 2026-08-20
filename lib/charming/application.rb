@@ -233,8 +233,9 @@ module Charming
 
     # Framework-internal session keys that must not be persisted: their values carry
     # symbols in *values* (which JSON round-trips into strings, corrupting focus rings
-    # and palette state) and they describe transient UI state anyway.
-    INTERNAL_SESSION_KEYS = %i[focus_state mouse_targets command_palette].freeze
+    # and palette state) and they describe transient UI state anyway. Both are app-global
+    # across screens by design: focus rings and the palette outlive any one controller.
+    INTERNAL_SESSION_KEYS = %i[focus_state command_palette].freeze
 
     # The subset of session entries that survive a JSON round-trip: nil, booleans,
     # numbers, strings, symbols, and arrays/hashes of those. State objects, procs,

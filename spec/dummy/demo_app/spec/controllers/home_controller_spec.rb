@@ -73,10 +73,9 @@ RSpec.describe DemoApp::HomeController do
 
   describe "#refresh_loaded" do
     it "renders the completed async task result" do
-      response = described_class.new(
-        application: application,
-        event: Charming::Events::TaskEvent.new(name: :refresh_home, value: "Done")
-      ).dispatch_task
+      response = described_class
+        .new(application: application)
+        .dispatch_task(Charming::Events::TaskEvent.new(name: :refresh_home, value: "Done"))
 
       expect(response.body).to include("Status: Loaded")
       expect(response.body).to include("Done")

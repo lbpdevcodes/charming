@@ -18,27 +18,28 @@ module Charming
   #     end
   #
   #     it "quits on q" do
-  #       expect(press(ctrl_class: HomeController, key: "q")).to be_quit
+  #       expect(press(ctrl, "q")).to be_quit
   #     end
   #   end
   #
   # Helpers:
-  # - `build_controller(klass, app:, screen:, route:)` — controller instance wired to an app
+  # - `build_controller(klass, app:, screen:, route:, params:)` — controller instance wired to an app
   # - `key_event("ctrl+p")` — build a KeyEvent from a human-readable string
-  # - `press(controller_or_class, "down")` — dispatch a key press, returns the Response
-  # - `press_sequence(klass, ["down", "down", "enter"], app:)` — dispatch several presses
+  # - `press(controller, "down")` — dispatch a key press at the instance, returns the Response
+  # - `press_sequence(controller, ["down", "down", "enter"])` — dispatch several presses at one instance
   #
   # RSpec matchers (when RSpec is loaded):
   # - `expect(response).to render_text("...")` / `render_match(/.../)`
   # - `expect(response).to be_quit` / `be_navigate` (predicate matchers on Response)
   # - `expect(response).to navigate_to(:projects)`
   module TestHelper
-    # Builds a controller instance with sensible test defaults: a fresh Application,
-    # an 80x24 screen, and no event.
-    def build_controller(controller_class, app: nil, screen: nil, route: nil, event: nil, params: {})
+    # Builds a controller instance with sensible test defaults: a fresh Application and
+    # an 80x24 screen. Runs the screen_entered lifecycle hook, mirroring the Runtime's
+    # persistent-controller lifecycle.
+    def build_controller(controller_class, app: nil, screen: nil, route: nil, params: {})
       app ||= Charming::Application.new
       screen ||= Charming::Screen.new(width: 80, height: 24)
-      controller_class.new(application: app, event: event, params: params, screen: screen, route: route)
+      controller_class.new(application: app, params: params, screen: screen, route: route).tap(&:screen_entered)
     end
 
     # Builds a KeyEvent from a human-readable string like "q", "down", "ctrl+p",
@@ -57,18 +58,16 @@ module Charming
       )
     end
 
-    # Dispatches a single key press against *controller_class* and returns the Response.
-    # Pass `app:` to share session state across presses.
-    def press(controller_class, key, app:, screen: nil, route: nil)
-      controller = build_controller(controller_class, app: app, screen: screen, route: route, event: key_event(key))
-      controller.dispatch_key
+    # Dispatches a single key press at *controller* (an instance from build_controller)
+    # and returns the Response. Accepts a human-readable string or a ready KeyEvent.
+    def press(controller, key)
+      controller.dispatch_key(key.is_a?(String) ? key_event(key) : key)
     end
 
-    # Dispatches each key in *keys* in order against fresh controller instances sharing
-    # *app*'s session (mirroring the runtime's controller-per-event model). Returns the
-    # last Response.
-    def press_sequence(controller_class, keys, app:, screen: nil, route: nil)
-      keys.map { |key| press(controller_class, key, app: app, screen: screen, route: route) }.last
+    # Dispatches each key in *keys* in order at the same controller instance (mirroring
+    # the runtime's persistent-controller model). Returns the last Response.
+    def press_sequence(controller, keys)
+      keys.map { |key| press(controller, key) }.last
     end
 
     # Builds a MemoryBackend pre-seeded with KeyEvents parsed from *keys*, ready to be

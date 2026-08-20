@@ -6,6 +6,10 @@ module Charming
     # palette from registered command bindings or theme list, and routes key/mouse events
     # through it. Supports both the standard command palette (:commands) and the theme picker
     # (:themes) via a discriminated `session[:command_palette]` state hash.
+    #
+    # Palette state lives in the session, not on the controller: the palette is app-global —
+    # a command can navigate to another screen, and the open/closed state must survive the
+    # controller swap that navigation causes.
     module CommandPalette
       # Opens the command palette populated with the controller's `command_bindings`. Pushes
       # a focus scope so subsequent keys are routed to the palette.

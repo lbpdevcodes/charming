@@ -33,14 +33,12 @@ RSpec.describe "Session persistence" do
       app = app_class.new
       app.session[:focus_state] = {"SomeController" => {scopes: [{ring: [:content], current: :content, origin: :ring}]}}
       app.session[:command_palette] = {type: :commands, value: "", cursor: 0, selected_index: 0}
-      app.session[:mouse_targets] = []
       app.session[:theme] = :nord
       app.save_session
 
       restored = app_class.new
       expect(restored.session).not_to have_key(:focus_state)
       expect(restored.session).not_to have_key(:command_palette)
-      expect(restored.session).not_to have_key(:mouse_targets)
       expect(restored.session[:theme]).to eq("nord")
     end
   end
@@ -61,14 +59,17 @@ RSpec.describe "Session persistence" do
     end
   end
 
-  it "round-trips component state through quit and boot" do
+  it "round-trips component state through quit and boot (deprecated but working)" do
+    Charming.instance_variable_set(:@deprecation_emitted, {})
     Dir.mktmpdir do |dir|
       path = File.join(dir, "session.json")
       app_class = app_class_with(path)
 
       app = app_class.new
       controller = Charming::Controller.new(application: app)
-      controller.component_state(:query, value: "", cursor: 0)[:value] = "charming"
+      expect do
+        controller.component_state(:query, value: "", cursor: 0)[:value] = "charming"
+      end.to output(/component_state is deprecated/).to_stderr
       app.save_session
 
       restored = app_class.new

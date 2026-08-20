@@ -23,12 +23,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Deprecated
 
+- `component_state` (still works, session-backed). Persistent controllers make
+  it unnecessary: memoize components in ivars
+  (`@query ||= Components::TextInput.new(...)`) for screen-lifetime state.
+- `Controller.new(event:)`. Construct once, then pass events to the dispatch
+  methods: `controller.dispatch_key(event)`.
 - The auto-discovered `<slot>_submitted` / `<slot>_selected` /
   `<slot>_cancelled` hook convention. It still works but warns once per call
   site with the `on_*` declaration to add. Scheduled for removal at 1.0.
 
 ### Changed
 
+- **Breaking:** Controllers are persistent per screen. The Runtime constructs
+  one instance at route entry and dispatches every event at it —
+  `dispatch_key(event)`, `dispatch_mouse(event)`, etc. take the event as an
+  argument; `Controller.new(event:)` still works but warns. Instance variables
+  now live for the screen's lifetime. Navigation discards the instance;
+  `screen_entered`/`screen_exited` hooks bracket its life. Migration: see
+  UPGRADING.md.
+- Form state moved from `session[:forms]` to the controller instance. Clear a
+  submitted form with the new `reset_form(:name)` instead of deleting session
+  keys.
+- Mouse hit-test targets (`register_mouse_targets`) live on the controller
+  instance and are no longer written to the session.
+- The rule for where state lives is now: controller ivars for screen-lifetime,
+  `state(name, Klass)` objects for app-lifetime, `persist_session` for
+  restart-lifetime.
+- **Breaking:** `Charming::TestHelper#press`/`#press_sequence` take a controller
+  instance (from `build_controller`) instead of a class, mirroring the
+  persistent lifecycle: `press(ctrl, "enter")`.
 - **Breaking:** Navigation is by screen name, not URL path.
   `navigate :project, id: 5` replaces `navigate_to "/projects/5"`.
   The controller helper is `navigate`. Migration: see UPGRADING.md.

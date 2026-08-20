@@ -14,13 +14,12 @@ RSpec.describe Charming::TestHelper do
       key "g", :go_settings
 
       def show
-        session[:count] ||= 0
-        render "Count: #{session[:count]}"
+        render "Count: #{@count || 0}"
       end
 
       def increment
-        session[:count] = session.fetch(:count, 0) + 1
-        render "Count: #{session[:count]}"
+        @count = (@count || 0) + 1
+        show
       end
 
       def go_settings
@@ -65,15 +64,15 @@ RSpec.describe Charming::TestHelper do
   end
 
   describe "#press and #press_sequence" do
-    it "dispatches a key press and returns the response" do
-      app = Charming::Application.new
-      response = press(TestHelperSpecController, "up", app: app)
+    it "dispatches a key press at one instance and returns the response" do
+      ctrl = build_controller(TestHelperSpecController)
+      response = press(ctrl, "up")
       expect(response).to render_text("Count: 1")
     end
 
-    it "shares session state across a sequence" do
-      app = Charming::Application.new
-      response = press_sequence(TestHelperSpecController, %w[up up up], app: app)
+    it "keeps instance state across a sequence of presses" do
+      ctrl = build_controller(TestHelperSpecController)
+      response = press_sequence(ctrl, %w[up up up])
       expect(response).to render_text("Count: 3")
     end
   end
@@ -92,12 +91,12 @@ RSpec.describe Charming::TestHelper do
     end
 
     it "supports be_quit" do
-      response = press(TestHelperSpecController, "q", app: app)
+      response = press(build_controller(TestHelperSpecController, app: app), "q")
       expect(response).to be_quit
     end
 
     it "supports navigate_to" do
-      response = press(TestHelperSpecController, "g", app: app)
+      response = press(build_controller(TestHelperSpecController, app: app), "g")
       expect(response).to navigate_to(:settings)
     end
   end

@@ -4,22 +4,27 @@ module Charming
   class Controller
     # Session-state helpers mixed into Controller: accessing the application session hash, lazy
     # state-object lookup by name/class, form builder invocation, and async task submission.
+    #
+    # State-lifetime rule of thumb: controller ivars for screen-lifetime, `state` objects for
+    # app-lifetime, session-persisted values (`persist_session`) for restart-lifetime.
     module SessionState
-      # Returns the application session hash for this controller. All persistent state (focus,
-      # sidebar index, command palette, user state objects) lives here.
+      # Returns the application session hash for this controller. The session holds state that
+      # must outlive a screen: `state` objects, app-global UI state (focus rings, sidebar index,
+      # command palette), and values persisted across restarts via `persist_session`.
       def session
         application.session
       end
 
       # Stores the named layout panes from the latest render so mouse events can be hit-tested
-      # against the same focus slots used by Tab traversal.
+      # against the same focus slots used by Tab traversal. Kept on the controller instance:
+      # mouse targets describe the latest render, not persistent state.
       def register_mouse_targets(targets)
-        session[:mouse_targets] = targets
+        @mouse_targets = targets
       end
 
       # Returns the named layout panes from the latest render.
       def mouse_targets
-        session.fetch(:mouse_targets, [])
+        @mouse_targets || []
       end
 
       # Returns the named session-backed state object, creating it on first access. *name* is a
@@ -30,26 +35,38 @@ module Charming
         session[:states][name.to_sym] ||= state_class.new(**attributes)
       end
 
-      # Returns the named mutable widget-state hash stored under `session[:component_state]`,
-      # seeding it from *defaults* on first access. This is the blessed way to keep an interactive
-      # component's state across ephemeral controller instances: store only JSON-safe primitives,
-      # rebuild the component from the hash each event, and write changed values back after
-      # `handle_key`. (Live component objects don't belong in the session — `save_session` drops
-      # anything that can't survive a JSON round-trip.)
+      # Deprecated. Returns the named mutable widget-state hash stored under
+      # `session[:component_state]`, seeding it from *defaults* on first access.
+      # Persistent controllers make this unnecessary: memoize the component in an ivar
+      # (`@query ||= Components::TextInput.new(...)`) for screen-lifetime state instead.
       def component_state(name, **defaults)
+        Charming.deprecate(
+          "component_state is deprecated. Persistent controllers keep components for the screen's " \
+            "lifetime — memoize them in ivars (`@query ||= Components::TextInput.new(...)`).",
+          category: :component_state
+        )
         session[:component_state] ||= {}
         session[:component_state][name.to_sym] ||= defaults
       end
 
-      # Builds a Form component scoped to the named form slot in `session[:forms]`. The block is
-      # evaluated against a Form::Builder (or invoked with the builder as its argument for arity-1 blocks)
-      # and returns a Form component pre-bound to the per-form mutable state hash.
+      # Builds a Form component scoped to the named form slot. The form's mutable state hash
+      # lives on the controller instance: it survives events on this screen and is discarded
+      # on navigation. Clear it after a successful submit with `reset_form`.
       def form(name, &block)
-        session[:forms] ||= {}
-        form_state = session[:forms][name.to_sym] ||= {}
         builder = Components::Form::Builder.new(theme: theme)
         block.arity.zero? ? builder.instance_eval(&block) : block.call(builder)
-        builder.build(state: form_state, theme: theme)
+        builder.build(state: form_states[name.to_sym] ||= {}, theme: theme)
+      end
+
+      # Clears the named form's stored state (e.g. after a successful submit, or when the
+      # form should re-seed from fresh defaults).
+      def reset_form(name)
+        form_states.delete(name.to_sym)
+      end
+
+      # The per-controller store of form state hashes, keyed by form name.
+      def form_states
+        @form_states ||= {}
       end
 
       # Submits a background task with the given *name*. The block is executed by the configured

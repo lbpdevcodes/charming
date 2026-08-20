@@ -26,7 +26,7 @@ RSpec.describe "component event dispatch" do
   end
 
   def press(controller_class, key: :x)
-    controller_class.new(application: application, event: Charming::Events::KeyEvent.new(key: key, char: key.to_s)).dispatch_key
+    controller_class.new(application: application).dispatch_key(Charming::Events::KeyEvent.new(key: key, char: key.to_s))
   end
 
   before do

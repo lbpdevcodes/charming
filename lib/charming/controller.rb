@@ -4,6 +4,11 @@ module Charming
   # Controller is the base class for all controller implementations in a Charming application.
   # It provides the action dispatch pipeline, key/command/timer/task bindings, sidebar navigation,
   # command palette management, and view rendering with layout composition.
+  #
+  # Controllers are persistent per screen: the Runtime constructs one instance when a route is
+  # entered and dispatches every event for that screen at it, so instance variables live for the
+  # screen's lifetime. Use ivars for screen-lifetime state, `state(name, Klass)` objects for
+  # app-lifetime state, and session persistence for restart-lifetime state.
   class Controller
     TimerBinding = Data.define(:name, :interval, :action, :autostart) do
       def initialize(name:, interval:, action:, autostart: true)
@@ -26,9 +31,17 @@ module Charming
 
     attr_reader :application, :event, :params, :screen, :route
 
-    # Initializes the controller with its parent application and optional event.
-    # Defaults to an 80x24 screen when no backend size is available.
-    def initialize(application:, event: nil, params: {}, screen: nil, route: nil)
+    # Initializes the controller with its parent application. The Runtime constructs one
+    # instance per route entry; *event:* is deprecated — pass events to the dispatch
+    # methods instead. Defaults to an 80x24 screen when no backend size is available.
+    def initialize(application:, params: {}, screen: nil, route: nil, event: nil)
+      if event
+        Charming.deprecate(
+          "Controller.new(event:) is deprecated. Construct the controller once and pass events " \
+            "to the dispatch methods (e.g. dispatch_key(event)).",
+          category: :controller_new_event
+        )
+      end
       @application = application
       @event = event
       @params = params
@@ -37,69 +50,66 @@ module Charming
       @response = nil
     end
 
+    # Lifecycle hook called once after this controller becomes the active screen's
+    # controller, before the first action dispatch. Start per-screen resources here.
+    def screen_entered
+    end
+
+    # Lifecycle hook called before this controller is discarded — on navigation away or
+    # at quit. Stop per-screen resources here.
+    def screen_exited
+    end
+
+    # Replaces the screen dimensions after a terminal resize, keeping the live controller
+    # instance (and its ivars) across the resize.
+    def update_screen(screen)
+      @screen = screen
+    end
+
     # Dispatches a named action on this controller (e.g. :show), running all
     # before/around/after hooks and rescue_from handlers.
-    def dispatch(action)
-      run_action_with_hooks(action)
-      render_default_action if response.nil? && auto_render_after?(action)
-      response || render("")
+    def dispatch(action, event: nil)
+      with_dispatch_state(event) do
+        run_action_with_hooks(action)
+        render_default_action if response.nil? && auto_render_after?(action)
+        response || render("")
+      end
     end
 
     # Key event dispatch. The precedence ladder (palette → focused text capture →
     # global bindings → overlay → sidebar/content/component) lives in KeyDispatch.
-    def dispatch_key
-      KeyDispatch.new(self).call
+    def dispatch_key(event = nil)
+      with_dispatch_state(event) { KeyDispatch.new(self).call }
     end
 
     # Timer event dispatcher: looks up the named action in timer bindings and runs it
     # with the full hook chain. Unlike #dispatch there is no render("") fallback — a
     # timer action that renders nothing yields a nil response, so silent ticks skip
     # the repaint instead of blanking the screen.
-    def dispatch_timer
-      b = self.class.timer_bindings[event.name.to_sym]
-      return nil unless b
-
-      run_action_with_hooks(b.action)
-      response
+    def dispatch_timer(event = nil)
+      with_dispatch_state(event) { timer_response }
     end
 
     # Task event dispatcher: looks up the handler in task bindings.
-    def dispatch_task
-      b = self.class.task_bindings[event.name.to_sym]
-      b ? dispatch(b.action) : nil
+    def dispatch_task(event = nil)
+      with_dispatch_state(event) { task_response(self.class.task_bindings) }
     end
 
     # Task progress dispatcher: looks up the handler in task progress bindings.
-    def dispatch_task_progress
-      b = self.class.task_progress_bindings[event.name.to_sym]
-      b ? dispatch(b.action) : nil
+    def dispatch_task_progress(event = nil)
+      with_dispatch_state(event) { task_response(self.class.task_progress_bindings) }
     end
 
     # Paste event dispatcher: forwards pasted text to the focused component's
     # `handle_paste` (TextInput, TextArea, Form text fields, and Autocomplete support it).
-    def dispatch_paste
-      slot = focus.current
-      return nil unless slot && respond_to?(slot, true)
-
-      component = send(slot)
-      return nil unless component.respond_to?(:handle_paste)
-
-      result = component.handle_paste(event)
-      return nil if result.nil?
-
-      dispatch_component_result(slot, result)
-      response
+    def dispatch_paste(event = nil)
+      with_dispatch_state(event) { paste_response }
     end
 
     # Mouse event dispatcher: command palette (if open) wins, then sidebar clicks
     # (route rows navigate directly), then named layout panes/components.
-    def dispatch_mouse
-      return dispatch_command_palette_mouse if command_palette_open?
-
-      sidebar_response = dispatch_sidebar_mouse
-      return sidebar_response if sidebar_response
-
-      dispatch_component_mouse
+    def dispatch_mouse(event = nil)
+      with_dispatch_state(event) { mouse_response }
     end
 
     # Renders a body or template wrapped in the controller's layout. Out-of-band escape sequences
@@ -157,5 +167,60 @@ module Charming
     private
 
     attr_reader :response
+
+    # Sets per-dispatch state (the event) around the block, then clears @response and
+    # @event when the outermost dispatch exits, so per-dispatch state cannot leak
+    # between events. Nested dispatches (a key binding calling #dispatch) keep it.
+    def with_dispatch_state(event)
+      @event = event if event
+      @dispatch_depth = @dispatch_depth.to_i + 1
+      yield
+    ensure
+      @dispatch_depth -= 1
+      if @dispatch_depth.zero?
+        @response = nil
+        @event = nil
+      end
+    end
+
+    # The timer binding's response, or nil when the ticked timer has no binding.
+    def timer_response
+      binding = self.class.timer_bindings[event.name.to_sym]
+      return nil unless binding
+
+      run_action_with_hooks(binding.action)
+      response
+    end
+
+    # The task binding's response, or nil when the event name has no binding.
+    def task_response(bindings)
+      binding = bindings[event.name.to_sym]
+      binding ? dispatch(binding.action) : nil
+    end
+
+    # Forwards the paste event to the focused component and dispatches its result.
+    def paste_response
+      slot = focus.current
+      return nil unless slot && respond_to?(slot, true)
+
+      component = send(slot)
+      return nil unless component.respond_to?(:handle_paste)
+
+      result = component.handle_paste(event)
+      return nil if result.nil?
+
+      dispatch_component_result(slot, result)
+      response
+    end
+
+    # Routes the mouse event: palette first, then sidebar, then named panes/components.
+    def mouse_response
+      return dispatch_command_palette_mouse if command_palette_open?
+
+      sidebar_response = dispatch_sidebar_mouse
+      return sidebar_response if sidebar_response
+
+      dispatch_component_mouse
+    end
   end
 end

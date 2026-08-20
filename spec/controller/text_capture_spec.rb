@@ -10,9 +10,10 @@ RSpec.describe "Text-capturing components and key dispatch priority" do
       key "q", :quit, scope: :global
       key "?", :open_help_marker, scope: :global
       key "n", :content_action
+      on_submit :note_form, :note_submitted
 
       def show
-        render "values: #{session.dig(:forms, :note, :values).inspect}"
+        render "values: #{form_states.dig(:note, :values).inspect}"
       end
 
       def open_help_marker
@@ -32,7 +33,7 @@ RSpec.describe "Text-capturing components and key dispatch priority" do
         end
       end
 
-      def note_form_submitted(values)
+      def note_submitted(values)
         session[:submitted] = values
         show
       end
@@ -41,14 +42,14 @@ RSpec.describe "Text-capturing components and key dispatch priority" do
 
   before { stub_const("TextCaptureSpecController", controller_class) }
 
+  let(:controller) { TextCaptureSpecController.new(application: application) }
+
   def press(key, char: nil, ctrl: false, shift: false)
-    TextCaptureSpecController
-      .new(application: application, event: Charming::Events::KeyEvent.new(key: key, char: char, ctrl: ctrl, shift: shift))
-      .dispatch_key
+    controller.dispatch_key(Charming::Events::KeyEvent.new(key: key, char: char, ctrl: ctrl, shift: shift))
   end
 
   def form_values
-    application.session.dig(:forms, :note, :values)
+    controller.form_states.dig(:note, :values)
   end
 
   it "types q into the focused field instead of quitting" do
@@ -81,11 +82,9 @@ RSpec.describe "Text-capturing components and key dispatch priority" do
   it "routes tab to the form for field navigation before ring traversal" do
     press(:tab)
 
-    state = application.session.dig(:forms, :note)
-    expect(state[:focus_index]).to eq(1)
+    expect(controller.form_states.dig(:note, :focus_index)).to eq(1)
     # The controller ring must not have cycled to the sidebar.
-    ctrl = TextCaptureSpecController.new(application: application)
-    expect(ctrl.sidebar_focused?).to be false
+    expect(controller.sidebar_focused?).to be false
   end
 
   it "still cycles the ring on tab when the focused component doesn't handle it" do
@@ -99,13 +98,12 @@ RSpec.describe "Text-capturing components and key dispatch priority" do
       end
     end
     stub_const("PagerSpecController", viewer_class)
+    viewer = PagerSpecController.new(application: application)
 
-    PagerSpecController.new(application: application).dispatch(:show)
-    PagerSpecController
-      .new(application: application, event: Charming::Events::KeyEvent.new(key: :tab))
-      .dispatch_key
+    viewer.dispatch(:show)
+    viewer.dispatch_key(Charming::Events::KeyEvent.new(key: :tab))
 
-    expect(PagerSpecController.new(application: application).sidebar_focused?).to be true
+    expect(viewer.sidebar_focused?).to be true
   end
 
   it "still quits on q when no text component is focused" do
@@ -116,8 +114,8 @@ RSpec.describe "Text-capturing components and key dispatch priority" do
     stub_const("PlainSpecController", plain_class)
 
     response = PlainSpecController
-      .new(application: application, event: Charming::Events::KeyEvent.new(key: :q, char: "q"))
-      .dispatch_key
+      .new(application: application)
+      .dispatch_key(Charming::Events::KeyEvent.new(key: :q, char: "q"))
 
     expect(response.quit?).to be true
   end

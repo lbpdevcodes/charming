@@ -74,30 +74,30 @@ Application → Router → Controller → ApplicationState → View → Componen
 ```
 
 - **Runtime** is the main loop: reads events from the backend, dispatches to controller (action keys, timer keys) or components, renders the response.
-- A fresh controller instance is created **per dispatch**. Never store state on the controller.
-- **Application state** is the only place for persistent TUI state; state objects are stored in `session` via `Controller#state(name, klass, **attrs)`.
+- One controller instance is created **per route entry** and lives for the screen's lifetime. Ivars hold screen-lifetime state; navigation discards the instance.
+- **Application state** objects (in `session` via `Controller#state(name, klass, **attrs)`) hold app-lifetime state that must survive navigation.
 - **Components** inherit from `View` to reuse assign readers and helpers (`text`, `box`, `row`, `column`, `render_component`).
 
-### What goes in `session`
+### What goes where: the three state lifetimes
 
-Because controllers are ephemeral, `session` is the only home for anything that must
-outlive one event. It holds exactly three kinds of values:
+1. **Screen-lifetime → controller ivars.** Components with interaction state
+   (TextInput, forms, scroll offsets) belong in memoized ivars:
+   `@query ||= Components::TextInput.new(...)`. They die with the screen.
+   Do not memoize data-bound components (a List of database rows) — rebuild
+   them each dispatch or refresh their data, or they serve stale content.
+2. **App-lifetime → `state(name, klass, **attrs)` objects.** Domain state that
+   must survive navigation. Stored in `session[:states]`; persisted by
+   `persist_session` only where JSON-safe.
+3. **Restart-lifetime → `persist_session`.** The session hash is serialized as
+   JSON on quit and restored on boot. Only JSON-safe values survive.
 
-1. **`ApplicationState` objects** via `state(name, klass, **attrs)` — domain state
-   (persisted by `persist_session` only where JSON-safe).
-2. **Primitive widget-state hashes** via `component_state(name, **defaults)` — the
-   blessed idiom for interactive components: store JSON-safe primitives, rebuild the
-   component from the hash each event, write changed values back after `handle_key`.
-   The command palette, forms, focus, and sidebar all work this way, and these hashes
-   survive `persist_session`.
-3. **Runtime engine handles** — objects that wrap a live process or terminal-protocol
-   state, e.g. `session[:audio] ||= Audio::Player.new` or an `Image::Source` (its
-   `transmitted?` flag gates a one-time transmission). These are deliberately built
-   once and are **intentionally dropped** by `save_session`.
-
-Do **not** store live view/component objects (TextInput, List, …) in `session` — they
-are silently dropped on persist and their mutable state belongs in a
-`component_state` hash instead.
+`session` also holds framework app-global UI state (focus rings, sidebar index,
+command palette) and **runtime engine handles** — objects that wrap a live
+process or terminal-protocol state, e.g. `session[:audio] ||= Audio::Player.new`
+or an `Image::Source` (its `transmitted?` flag gates a one-time transmission).
+These are deliberately built once and are **intentionally dropped** by
+`save_session`. `component_state` still works (session-backed) but is deprecated:
+use ivars for screen-lifetime component state.
 
 ---
 
@@ -289,7 +289,7 @@ When adding specs for a backend-dependent feature, prefer `MemoryBackend` for un
 
 ## Key Gotchas
 
-1. **Controllers are ephemeral** — the Runtime creates new instances per event. Application state must live in `ApplicationState` objects stored in `session` via `Controller#state(...)`.
+1. **Controllers are persistent per screen** — the Runtime constructs one instance per route entry and dispatches all of that screen's events at it. Ivars hold screen-lifetime state; app-lifetime state lives in `ApplicationState` objects via `Controller#state(...)`.
 2. **Components inherit View** — they get `assigns`, helper methods, and `render`. They do NOT have their own lifecycle separate from `View`.
 3. **`Charming.run(app)` is the entry point** — it instantiates `Runtime` with an optional backend. Tests pass `backend: MemoryBackend.new(...)` directly.
 4. **Command palette keys take priority** — an open palette intercepts key events before controller `key_bindings`.

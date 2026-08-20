@@ -10,8 +10,11 @@ RSpec.describe Journal::ReaderController do
   let(:entry) { Journal::Entry.create!(title: "A walk", mood: "good", body: "It was **lovely**.") }
 
   def controller_for(event = nil)
-    route = app.routes.resolve(:entry, id: entry.id)
-    described_class.new(application: app, route: route, params: route.params, event: event)
+    @controller_for ||= begin
+      route = app.routes.resolve(:entry, id: entry.id)
+      described_class.new(application: app, route: route, params: route.params)
+    end
+    event ? @controller_for.dispatch_key(event) : @controller_for
   end
 
   it "renders the markdown body with breadcrumbs" do
@@ -23,7 +26,7 @@ RSpec.describe Journal::ReaderController do
 
   it "navigates to the edit screen on e" do
     controller_for.dispatch(:show)
-    response = controller_for(key_event("e")).dispatch_key
+    response = controller_for(key_event("e"))
     expect(response).to navigate_to(:edit_entry, id: entry.id)
   end
 
@@ -35,8 +38,8 @@ RSpec.describe Journal::ReaderController do
 
   it "deletes via the confirm modal and returns to the list" do
     controller_for.dispatch(:show)
-    controller_for(key_event("d")).dispatch_key
-    response = controller_for(key_event("y")).dispatch_key
+    controller_for(key_event("d"))
+    response = controller_for(key_event("y"))
 
     expect(Journal::Entry.exists?(entry.id)).to be false
     expect(response).to navigate_to(:root)
