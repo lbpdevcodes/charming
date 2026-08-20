@@ -25,7 +25,6 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "activemodel", "~> 8.1", ">= 8.1.2"
-  spec.add_dependency "activesupport", "~> 8.1", ">= 8.1.2"
   spec.add_dependency "commonmarker", "~> 2.0"
   spec.add_dependency "logger", "~> 1.7"
   spec.add_dependency "rouge", "~> 5.0"

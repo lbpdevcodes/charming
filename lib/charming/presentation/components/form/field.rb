@@ -116,7 +116,7 @@ module Charming
 
         # Converts a snake_case symbol/string to a humanized "Capitalized" string.
         def humanize(value)
-          ActiveSupport::Inflector.humanize(value)
+          Internal::Inflections.humanize(value)
         end
       end
     end

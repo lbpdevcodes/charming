@@ -3,7 +3,6 @@ PATH
   specs:
     charming (0.3.0)
       activemodel (~> 8.1, >= 8.1.2)
-      activesupport (~> 8.1, >= 8.1.2)
       commonmarker (~> 2.0)
       logger (~> 1.7)
       rouge (~> 5.0)

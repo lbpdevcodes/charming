@@ -103,12 +103,12 @@ module Charming
 
       # The pluralized table name (e.g., "user" → "users", "category" → "categories").
       def table_name
-        ActiveSupport::Inflector.pluralize(name.snake_name)
+        Internal::Inflections.pluralize(name.snake_name)
       end
 
       # The CamelCase migration class name (e.g., "users" → "Users").
       def table_class_name
-        ActiveSupport::Inflector.camelize(table_name)
+        Internal::Inflections.camelize(table_name)
       end
 
       # A migration timestamp in ActiveRecord's filename format, bumped past any

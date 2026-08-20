@@ -21,7 +21,7 @@ module Charming
 
       # The CamelCase class name (e.g., "user" → "User").
       def class_name
-        ActiveSupport::Inflector.camelize(snake_name)
+        Internal::Inflections.camelize(snake_name)
       end
 
       # The controller class name (e.g., "user" → "UserController").

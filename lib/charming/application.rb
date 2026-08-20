@@ -24,7 +24,7 @@ module Charming
       # Derives the module namespace from the class name — e.g., Admin::HomeController
       # yields "Admin". Mirrors Rails' engine-style namespacing.
       def namespace
-        ActiveSupport::Inflector.deconstantize(name.to_s)
+        Internal::Inflections.deconstantize(name.to_s)
       end
 
       # Returns or sets the app logger. Defaults to a null-device logger so app and framework code

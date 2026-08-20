@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "active_support/inflector"
-require "active_support/string_inquirer"
 require "logger"
 require "zeitwerk"
 
@@ -26,15 +24,15 @@ module Charming
   # Base error class for all Charming-specific exceptions (used by templates, generators, runtime, etc.).
   class Error < StandardError; end
 
-  # The current environment, read from CHARMING_ENV (default "development"). Returns a
-  # StringInquirer so callers can write `Charming.env.test?` / `Charming.env.production?`.
+  # The current environment, read from CHARMING_ENV (default "development"). Returns an
+  # EnvInquirer so callers can write `Charming.env.test?` / `Charming.env.production?`.
   def self.env
-    @env ||= ActiveSupport::StringInquirer.new(ENV["CHARMING_ENV"] || "development")
+    @env ||= Internal::EnvInquirer.new(ENV["CHARMING_ENV"] || "development")
   end
 
   # Overrides the environment (used by tests and the CLI).
   def self.env=(value)
-    @env = value.nil? ? nil : ActiveSupport::StringInquirer.new(value.to_s)
+    @env = value.nil? ? nil : Internal::EnvInquirer.new(value.to_s)
   end
 
   # Entry point for running a Charming application. Instantiates a Runtime for *application* and starts

@@ -40,7 +40,7 @@ module Charming
 
       # CamelCase rendering of the action name (e.g., "user_settings" → "UserSettings").
       def action_class_name
-        ActiveSupport::Inflector.camelize(action)
+        Internal::Inflections.camelize(action)
       end
     end
   end

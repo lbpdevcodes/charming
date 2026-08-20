@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "forwardable"
+
 module Charming
   module Layout
     # Pane is a leaf layout node: a single rectangle with optional border, padding, and
@@ -7,9 +9,11 @@ module Charming
     # view's context). Panes with a `name` and `behavior.focus: true` are registered as
     # focusable slots in the controller's focus ring.
     class Pane
+      extend Forwardable
+
       attr_reader :name
-      delegate :width, :height, :grow,
-        :min_width, :max_width, :min_height, :max_height, to: :geometry
+      def_delegators :geometry, :width, :height, :grow,
+        :min_width, :max_width, :min_height, :max_height
 
       # *name* is the focus slot identifier. *content* (or a *block*) is the body; *view*
       # is the view used for instance_exec when the block is given. *geometry*, *style*, and

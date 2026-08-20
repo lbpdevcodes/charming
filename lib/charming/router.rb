@@ -110,13 +110,13 @@ module Charming
 
     # Looks up a constant by name in Object. Used to resolve controller strings from route definitions.
     def constantize(name)
-      ActiveSupport::Inflector.constantize(name)
+      Internal::Inflections.constantize(name)
     end
 
     # Builds the full controller constant name, prepending the namespace if present.
     # For example: "home" with namespace "Admin" → "Admin::HomeController".
     def controller_constant_name(controller_name)
-      name = "#{ActiveSupport::Inflector.camelize(controller_name)}Controller"
+      name = "#{Internal::Inflections.camelize(controller_name)}Controller"
       @namespace.to_s.empty? ? name : "#{@namespace}::#{name}"
     end
 

@@ -116,8 +116,8 @@ module Charming
 
     # Resolves `<AppModule>::Application` from the root file name, or nil.
     def console_application_class(root_file)
-      module_name = ActiveSupport::Inflector.camelize(File.basename(root_file, ".rb"))
-      ActiveSupport::Inflector.constantize("#{module_name}::Application")
+      module_name = Internal::Inflections.camelize(File.basename(root_file, ".rb"))
+      Internal::Inflections.constantize("#{module_name}::Application")
     rescue NameError
       nil
     end

@@ -60,7 +60,7 @@ module Charming
 
       # The CamelCase migration class name derived from the snake_case migration name.
       def migration_class_name
-        ActiveSupport::Inflector.camelize(name.snake_name)
+        Internal::Inflections.camelize(name.snake_name)
       end
 
       # Builds the `change` method body based on the migration name convention.

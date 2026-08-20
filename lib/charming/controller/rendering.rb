@@ -96,9 +96,9 @@ module Charming
       def conventional_view_constant_path(name)
         parts = name.to_s.split("/")
         action = parts.pop
-        view_name = "#{ActiveSupport::Inflector.camelize(action.to_s)}View"
+        view_name = "#{Internal::Inflections.camelize(action.to_s)}View"
 
-        parts.map { |part| ActiveSupport::Inflector.camelize(part) } + [view_name]
+        parts.map { |part| Internal::Inflections.camelize(part) } + [view_name]
       end
 
       # Returns the default template path for a given *action* (e.g., "home/show" for HomeController#show).
@@ -108,8 +108,8 @@ module Charming
 
       # Returns the underscored controller path (e.g., "home" for HomeController) used for view lookup.
       def controller_template_path
-        controller_name = ActiveSupport::Inflector.demodulize(self.class.name).delete_suffix("Controller")
-        ActiveSupport::Inflector.underscore(controller_name)
+        controller_name = Internal::Inflections.demodulize(self.class.name).delete_suffix("Controller")
+        Internal::Inflections.underscore(controller_name)
       end
     end
   end
