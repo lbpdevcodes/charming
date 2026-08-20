@@ -2,19 +2,20 @@
 
 RSpec.describe Charming::Components::MultiSelectList do
   let(:items) { %w[ruby rails rspec] }
+  let(:theme) { Charming::UI::Theme.default }
 
   def key(name)
     Charming::Events::KeyEvent.new(key: name)
   end
 
   it "renders unchecked boxes by default" do
-    list = described_class.new(items: items)
+    list = described_class.new(items: items, theme: theme)
     plain = Charming::UI::Width.strip_ansi(list.render)
     expect(plain.lines.first).to include("[ ] ruby")
   end
 
   it "toggles the highlighted item with space" do
-    list = described_class.new(items: items)
+    list = described_class.new(items: items, theme: theme)
     expect(list.handle_key(key(:space))).to eq(Charming::Components::Result.handled)
     expect(Charming::UI::Width.strip_ansi(list.render)).to include("[x] ruby")
   end

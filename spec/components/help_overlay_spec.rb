@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
 RSpec.describe Charming::Components::HelpOverlay do
+  let(:theme) { Charming::UI::Theme.default }
+
   it "renders bindings as aligned key/description pairs" do
-    overlay = described_class.new(bindings: {"q" => "Quit", "ctrl+p" => "Command palette"})
+    overlay = described_class.new(bindings: {"q" => "Quit", "ctrl+p" => "Command palette"}, theme: theme)
     plain = Charming::UI::Width.strip_ansi(overlay.render)
     expect(plain).to include("q")
     expect(plain).to include("Quit")
@@ -25,14 +27,14 @@ RSpec.describe Charming::Components::HelpOverlay do
     end
     stub_const("HelpOverlaySpecController", controller_class)
 
-    overlay = described_class.for_controller(HelpOverlaySpecController)
+    overlay = described_class.for_controller(HelpOverlaySpecController, theme: theme)
     plain = Charming::UI::Width.strip_ansi(overlay.render)
     expect(plain).to include("Quit")
     expect(plain).to include("Open command palette")
   end
 
   it "renders a notice when there are no bindings" do
-    overlay = described_class.new(bindings: {})
+    overlay = described_class.new(bindings: {}, theme: theme)
     expect(Charming::UI::Width.strip_ansi(overlay.render)).to include("No key bindings")
   end
 end

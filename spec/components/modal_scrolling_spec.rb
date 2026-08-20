@@ -2,6 +2,7 @@
 
 RSpec.describe Charming::Components::Modal do
   let(:long_content) { (1..20).map { |n| "line #{n}" }.join("\n") }
+  let(:theme) { Charming::UI::Theme.default }
 
   def key(name)
     Charming::Events::KeyEvent.new(key: name)
@@ -9,7 +10,7 @@ RSpec.describe Charming::Components::Modal do
 
   describe "scrollable body" do
     it "windows the body to max_body_height" do
-      modal = described_class.new(content: long_content, max_body_height: 5)
+      modal = described_class.new(content: long_content, max_body_height: 5, theme: theme)
       plain = Charming::UI::Width.strip_ansi(modal.render)
       expect(plain).to include("line 1")
       expect(plain).not_to include("line 6")
@@ -22,7 +23,7 @@ RSpec.describe Charming::Components::Modal do
     end
 
     it "restores a prior scroll offset" do
-      modal = described_class.new(content: long_content, max_body_height: 5, scroll_offset: 10)
+      modal = described_class.new(content: long_content, max_body_height: 5, scroll_offset: 10, theme: theme)
       plain = Charming::UI::Width.strip_ansi(modal.render)
       expect(plain).to include("line 11")
       expect(plain).not_to include("line 1\n")

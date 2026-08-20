@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 RSpec.describe Charming::Components::CommandPalette do
+  let(:theme) { Charming::UI::Theme.default }
+
   def key(name, char: nil)
     Charming::Events::KeyEvent.new(key: name, char: char)
   end
@@ -14,13 +16,13 @@ RSpec.describe Charming::Components::CommandPalette do
   end
 
   it "renders the search input and command list" do
-    palette = described_class.new(commands: [command("Open File"), command("Quit")])
+    palette = described_class.new(commands: [command("Open File"), command("Quit")], theme: theme)
 
     expect(palette.render).to eq("|Search commands\n#{selected("> Open File")}\n  Quit")
   end
 
   it "filters commands as the user types" do
-    palette = described_class.new(commands: [command("Open File"), command("Quit")])
+    palette = described_class.new(commands: [command("Open File"), command("Quit")], theme: theme)
 
     expect(palette.handle_key(key(:q, char: "q"))).to eq(Charming::Components::Result.handled)
 
@@ -58,7 +60,8 @@ RSpec.describe Charming::Components::CommandPalette do
       commands: [command("Open"), command("Quit")],
       value: "qu",
       cursor: 1,
-      selected_index: 0
+      selected_index: 0,
+      theme: theme
     )
 
     expect(palette.render).to eq("q|u\n#{selected("> Quit")}")

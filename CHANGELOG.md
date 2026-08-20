@@ -107,6 +107,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Theme and style are injected, never ambient. `View#theme` no longer falls
+  back to `UI::Theme.default`; it reads the `theme` assign (the controller's
+  rendering pipeline always injects one) or the controller's theme.
+  `View#style` constructs a fresh `UI::Style` instead of reading `UI.style`.
+  `UI::Theme.default` remains only as the value `Application#theme_for`
+  returns when nothing is configured. App views rendered through a controller
+  are unaffected; standalone views/components need an explicit `theme:`.
 - View assigns no longer define per-instance singleton methods. Assign keys
   resolve via `method_missing`/`respond_to_missing?` (existing methods still
   win, exactly as before). A 6-assign view now allocates 5 objects per

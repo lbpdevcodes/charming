@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 RSpec.describe Charming::Components::List do
+  let(:theme) { Charming::UI::Theme.default }
+
   def key(name)
     Charming::Events::KeyEvent.new(key: name)
   end
@@ -80,20 +82,20 @@ RSpec.describe Charming::Components::List do
   end
 
   it "renders the selected item highlighted" do
-    list = described_class.new(items: %w[Open Quit])
+    list = described_class.new(items: %w[Open Quit], theme: theme)
 
     expect(list.render).to eq("\e[1;38;2;159;232;176;48;2;24;35;61m> Open\e[0m\n  Quit")
   end
 
   it "supports custom item labels" do
     command = Struct.new(:name)
-    list = described_class.new(items: [command.new("Open File")], label: :name.to_proc)
+    list = described_class.new(items: [command.new("Open File")], label: :name.to_proc, theme: theme)
 
     expect(list.render).to eq("\e[1;38;2;159;232;176;48;2;24;35;61m> Open File\e[0m")
   end
 
   it "renders a viewport around the selected item" do
-    list = described_class.new(items: %w[One Two Three Four], selected_index: 2, height: 2)
+    list = described_class.new(items: %w[One Two Three Four], selected_index: 2, height: 2, theme: theme)
 
     expect(list.render).to eq("  Two\n\e[1;38;2;159;232;176;48;2;24;35;61m> Three\e[0m")
   end
@@ -205,7 +207,7 @@ RSpec.describe Charming::Components::List do
     end
 
     it "renders only the filtered items" do
-      list = described_class.new(items: %w[Alpha Beta], filter: "beta")
+      list = described_class.new(items: %w[Alpha Beta], filter: "beta", theme: theme)
 
       expect(list.render).not_to include("Alpha")
     end

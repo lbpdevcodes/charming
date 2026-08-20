@@ -2,13 +2,14 @@
 
 RSpec.describe Charming::Components::TabBar do
   let(:tabs) { ["Files", "Search", "Git"] }
+  let(:theme) { Charming::UI::Theme.default }
 
   def key(name)
     Charming::Events::KeyEvent.new(key: name)
   end
 
   it "renders all tabs" do
-    bar = described_class.new(tabs: tabs)
+    bar = described_class.new(tabs: tabs, theme: theme)
     plain = Charming::UI::Width.strip_ansi(bar.render)
     expect(plain).to include("Files")
     expect(plain).to include("Search")

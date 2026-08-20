@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
 RSpec.describe Charming::Components::CommandPaletteModal do
+  let(:theme) { Charming::UI::Theme.default }
+
   it "renders command palette content with default modal chrome" do
-    modal = described_class.new(content: "Top\nNew")
+    modal = described_class.new(content: "Top\nNew", theme: theme)
     plain = Charming::UI::Width.strip_ansi(modal.render)
 
     expect(plain).to include("Command palette")
@@ -12,7 +14,7 @@ RSpec.describe Charming::Components::CommandPaletteModal do
   end
 
   it "allows modal defaults to be overridden" do
-    modal = described_class.new(content: "Body", title: "Commands", help: "Pick one", width: 24)
+    modal = described_class.new(content: "Body", title: "Commands", help: "Pick one", width: 24, theme: theme)
     plain = Charming::UI::Width.strip_ansi(modal.render)
 
     expect(plain).to include("Commands")

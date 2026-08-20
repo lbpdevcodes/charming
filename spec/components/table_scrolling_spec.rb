@@ -2,6 +2,7 @@
 
 RSpec.describe Charming::Components::Table do
   let(:rows) { (1..10).map { |n| ["row#{n}", n.to_s] } }
+  let(:theme) { Charming::UI::Theme.default }
 
   def key(name)
     Charming::Events::KeyEvent.new(key: name)
@@ -9,7 +10,7 @@ RSpec.describe Charming::Components::Table do
 
   describe "height windowing" do
     it "renders only the visible window of body rows" do
-      table = described_class.new(header: %w[Name N], rows: rows, height: 3)
+      table = described_class.new(header: %w[Name N], rows: rows, height: 3, theme: theme)
       plain = Charming::UI::Width.strip_ansi(table.render)
       expect(plain).to include("row1")
       expect(plain).to include("row3")
@@ -17,7 +18,7 @@ RSpec.describe Charming::Components::Table do
     end
 
     it "auto-scrolls to keep the selection in view" do
-      table = described_class.new(header: %w[Name N], rows: rows, height: 3, selected_index: 6)
+      table = described_class.new(header: %w[Name N], rows: rows, height: 3, selected_index: 6, theme: theme)
       plain = Charming::UI::Width.strip_ansi(table.render)
       expect(plain).to include("row7")
       expect(plain).not_to include("row1")

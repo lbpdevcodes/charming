@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 RSpec.describe Charming::Components::Tree do
+  let(:theme) { Charming::UI::Theme.default }
+
   let(:nodes) do
     [
       {label: "src", expanded: true, children: [
@@ -16,7 +18,7 @@ RSpec.describe Charming::Components::Tree do
   end
 
   it "renders expanded branches with their children" do
-    tree = described_class.new(nodes: nodes)
+    tree = described_class.new(nodes: nodes, theme: theme)
     plain = Charming::UI::Width.strip_ansi(tree.render)
     expect(plain).to include("▾ src")
     expect(plain).to include("main.rb")
@@ -25,13 +27,13 @@ RSpec.describe Charming::Components::Tree do
   end
 
   it "hides children of collapsed branches" do
-    tree = described_class.new(nodes: nodes)
+    tree = described_class.new(nodes: nodes, theme: theme)
     plain = tree.render
     expect(plain).not_to include("util.rb")
   end
 
   it "indents children by depth" do
-    tree = described_class.new(nodes: nodes)
+    tree = described_class.new(nodes: nodes, theme: theme)
     lines = Charming::UI::Width.strip_ansi(tree.render).lines
     expect(lines[1]).to start_with("  ") # main.rb is one level deep
   end
@@ -43,13 +45,13 @@ RSpec.describe Charming::Components::Tree do
   end
 
   it "expands a collapsed branch with right" do
-    tree = described_class.new(nodes: nodes, cursor_index: 2) # "lib"
+    tree = described_class.new(nodes: nodes, cursor_index: 2, theme: theme) # "lib"
     tree.handle_key(key(:right))
     expect(tree.render).to include("util.rb")
   end
 
   it "collapses an expanded branch with left" do
-    tree = described_class.new(nodes: nodes)
+    tree = described_class.new(nodes: nodes, theme: theme)
     tree.handle_key(key(:left))
     expect(tree.render).not_to include("main.rb")
   end
@@ -68,20 +70,20 @@ RSpec.describe Charming::Components::Tree do
   end
 
   it "toggles a branch on enter" do
-    tree = described_class.new(nodes: nodes) # cursor on src
+    tree = described_class.new(nodes: nodes, theme: theme) # cursor on src
     expect(tree.handle_key(key(:enter))).to eq(Charming::Components::Result.handled)
     expect(tree.render).not_to include("main.rb")
   end
 
   it "toggles a branch on click" do
-    tree = described_class.new(nodes: nodes)
+    tree = described_class.new(nodes: nodes, theme: theme)
     event = Charming::Events::MouseEvent.new(button: 0, x: 0, y: 0)
     expect(tree.handle_mouse(event)).to eq(Charming::Components::Result.handled)
     expect(tree.render).not_to include("main.rb")
   end
 
   it "windows long trees to the configured height" do
-    tree = described_class.new(nodes: nodes, height: 2)
+    tree = described_class.new(nodes: nodes, height: 2, theme: theme)
     expect(tree.render.lines.length).to eq(2)
   end
 

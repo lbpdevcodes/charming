@@ -69,7 +69,7 @@ RSpec.describe Charming::Components::Filepicker do
   end
 
   it "renders the listing with the selection marker" do
-    picker = described_class.new(root: @root)
+    picker = described_class.new(root: @root, theme: Charming::UI::Theme.default)
 
     plain = picker.render.gsub(/\e\[[0-9;]*m/, "")
     expect(plain).to eq("> docs/\n  README.md")

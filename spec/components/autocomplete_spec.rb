@@ -2,6 +2,7 @@
 
 RSpec.describe Charming::Components::Autocomplete do
   let(:suggestions) { %w[ruby rails rspec python] }
+  let(:theme) { Charming::UI::Theme.default }
 
   def key(name, char: nil)
     Charming::Events::KeyEvent.new(key: name, char: char)
@@ -61,7 +62,7 @@ RSpec.describe Charming::Components::Autocomplete do
   end
 
   it "renders the input line and suggestions" do
-    combo = described_class.new(suggestions: suggestions, value: "ru")
+    combo = described_class.new(suggestions: suggestions, value: "ru", theme: theme)
     plain = Charming::UI::Width.strip_ansi(combo.render)
     expect(plain).to include("ru|")
     expect(plain).to include("ruby")
@@ -69,7 +70,7 @@ RSpec.describe Charming::Components::Autocomplete do
 
   describe "#suggestions=" do
     it "replaces the suggestions and clamps the selection" do
-      combo = described_class.new(suggestions: %w[alpha beta gamma], value: "", selected_index: 2)
+      combo = described_class.new(suggestions: %w[alpha beta gamma], value: "", selected_index: 2, theme: theme)
 
       combo.suggestions = %w[delta]
 

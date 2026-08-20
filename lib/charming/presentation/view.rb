@@ -39,14 +39,17 @@ module Charming
 
     attr_reader :assigns
 
-    # Returns the shared UI style configuration used by components and views for visual rendering (colors, borders).
+    # Builds a fresh Style for inline visual styling (colors, borders, alignment).
+    # Styles are constructed, not read from a shared singleton.
     def style
-      UI.style
+      UI::Style.new
     end
 
-    # Returns the active theme: uses `theme` from assigns or controller, falling back to `UI::Theme.default`.
+    # Returns the active theme as injected: the `theme` assign (the controller's
+    # rendering pipeline always passes one) or the controller's theme. Views and
+    # components take what they're given — there is no ambient fallback.
     def theme
-      assigns[:theme] || assigns[:controller]&.theme || UI::Theme.default
+      assigns[:theme] || assigns[:controller]&.theme
     end
 
     # Outputs styled text through the view's rendering pipeline. Accepts a named `style:` for inline formatting.

@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 RSpec.describe Charming::Components::Form do
+  let(:theme) { Charming::UI::Theme.default }
+
   def key(name, char: nil, shift: false, ctrl: false)
     Charming::Events::KeyEvent.new(key: name, char: char, shift: shift, ctrl: ctrl)
   end
@@ -12,13 +14,14 @@ RSpec.describe Charming::Components::Form do
   it "renders input, select, confirm, and note fields" do
     form = described_class.new(
       fields: [
-        described_class::Input.new(:name, placeholder: "Ada"),
-        described_class::Textarea.new(:bio, placeholder: "Bio", height: 2),
-        described_class::Select.new(:plan, options: %w[Free Pro]),
-        described_class::Confirm.new(:terms, label: "Accept terms?"),
-        described_class::Note.new("Escape cancels")
+        described_class::Input.new(:name, placeholder: "Ada", theme: theme),
+        described_class::Textarea.new(:bio, placeholder: "Bio", height: 2, theme: theme),
+        described_class::Select.new(:plan, options: %w[Free Pro], theme: theme),
+        described_class::Confirm.new(:terms, label: "Accept terms?", theme: theme),
+        described_class::Note.new("Escape cancels", theme: theme)
       ],
-      state: {}
+      state: {},
+      theme: theme
     )
 
     rendered = plain(form.render)
@@ -32,7 +35,7 @@ RSpec.describe Charming::Components::Form do
   end
 
   it "humanizes default field labels" do
-    form = described_class.new(fields: [described_class::Input.new(:first_name)], state: {})
+    form = described_class.new(fields: [described_class::Input.new(:first_name, theme: theme)], state: {}, theme: theme)
 
     expect(plain(form.render)).to include("First name:")
   end
@@ -45,7 +48,7 @@ RSpec.describe Charming::Components::Form do
 
     expect(state[:values]).to eq(name: "a")
     expect(state[:fields]).to eq(name: {cursor: 1})
-    expect(plain(described_class.new(fields: [described_class::Input.new(:name)], state: state).render)).to include("a|")
+    expect(plain(described_class.new(fields: [described_class::Input.new(:name, theme: theme)], state: state, theme: theme).render)).to include("a|")
   end
 
   it "stores select choice and selected index in primitive state" do
@@ -56,7 +59,7 @@ RSpec.describe Charming::Components::Form do
 
     expect(state[:values]).to eq(plan: "Pro")
     expect(state[:fields]).to eq(plan: {selected_index: 1})
-    expect(plain(described_class.new(fields: [described_class::Select.new(:plan, options: %w[Free Pro Team])], state: state).render)).to include("Plan: Pro")
+    expect(plain(described_class.new(fields: [described_class::Select.new(:plan, options: %w[Free Pro Team], theme: theme)], state: state, theme: theme).render)).to include("Plan: Pro")
   end
 
   it "toggles multiselect checkboxes with space and stores the checked set" do
@@ -73,8 +76,9 @@ RSpec.describe Charming::Components::Form do
     expect(state[:values]).to eq(tags: %w[ruby go])
     expect(state[:fields]).to eq(tags: {selected_indices: [0, 1], cursor: 1})
     rerendered = described_class.new(
-      fields: [described_class::Multiselect.new(:tags, options: %w[ruby go rust])],
-      state: state
+      fields: [described_class::Multiselect.new(:tags, options: %w[ruby go rust], theme: theme)],
+      state: state,
+      theme: theme
     )
     expect(plain(rerendered.render)).to include("Tags: ruby, go")
   end
@@ -122,7 +126,7 @@ RSpec.describe Charming::Components::Form do
 
     expect(state[:values]).to eq(bio: "a\nb")
     expect(state[:fields]).to eq(bio: {cursor: 3, offset: 0, preferred_column: 1})
-    expect(plain(described_class.new(fields: [described_class::Textarea.new(:bio, height: 2)], state: state).render)).to include("  b|")
+    expect(plain(described_class.new(fields: [described_class::Textarea.new(:bio, height: 2, theme: theme)], state: state, theme: theme).render)).to include("  b|")
   end
 
   it "inserts a newline on plain enter in a textarea (leave the field with tab)" do
@@ -212,7 +216,7 @@ RSpec.describe Charming::Components::Form do
 
   it "renders validation errors instead of submitting invalid values" do
     state = {}
-    form = described_class.new(fields: [described_class::Input.new(:name, required: true)], state: state)
+    form = described_class.new(fields: [described_class::Input.new(:name, required: true, theme: theme)], state: state, theme: theme)
 
     expect(form.handle_key(key(:enter))).to eq(Charming::Components::Result.handled)
 

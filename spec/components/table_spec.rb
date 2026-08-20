@@ -171,10 +171,13 @@ RSpec.describe Charming::Components::Table do
   end
 
   describe "#render auto-fit columns" do
+    let(:theme) { Charming::UI::Theme.default }
+
     it "renders a header row and data rows with auto-fitted columns from strings" do
       table = described_class.new(
         header: %w[Name Age City],
-        rows: [%w[Alice 30 New York], ["Bob", "25", "SF"]]
+        rows: [%w[Alice 30 New York], ["Bob", "25", "SF"]],
+        theme: theme
       )
 
       output = table.render
@@ -186,7 +189,8 @@ RSpec.describe Charming::Components::Table do
     it "renders unicode borders" do
       table = described_class.new(
         header: %w[Col],
-        rows: [%w[data]]
+        rows: [%w[data]],
+        theme: theme
       )
 
       output = table.render
@@ -197,7 +201,8 @@ RSpec.describe Charming::Components::Table do
     it "renders auto-fits wide values expand columns" do
       table = described_class.new(
         header: %w[Short Long],
-        rows: [%w[a "Very long value that exceeds the first column width significantly"]]
+        rows: [%w[a "Very long value that exceeds the first column width significantly"]],
+        theme: theme
       )
 
       output = table.render
@@ -208,7 +213,8 @@ RSpec.describe Charming::Components::Table do
     it "merges trailing cells into the last column when row has more cells than header" do
       table = described_class.new(
         header: %w[Name Address],
-        rows: [["Alice", "123", "Main", "St"]]
+        rows: [["Alice", "123", "Main", "St"]],
+        theme: theme
       )
 
       expect(table.render).to include("123 Main St")
@@ -218,7 +224,8 @@ RSpec.describe Charming::Components::Table do
       row = {name: "Alice", age: 30}
       table = described_class.new(
         header: %w[Name Age],
-        rows: [row]
+        rows: [row],
+        theme: theme
       )
 
       output = table.render
@@ -226,7 +233,7 @@ RSpec.describe Charming::Components::Table do
     end
 
     it "renders the exact unicode grid (characterizes the tty-table replacement)" do
-      table = described_class.new(header: %w[Name Age], rows: [["Ada", 36], ["Grace", 41]])
+      table = described_class.new(header: %w[Name Age], rows: [["Ada", 36], ["Grace", 41]], theme: theme)
 
       lines = table.render.lines(chomp: true).map { |line| Charming::UI::Width.strip_ansi(line) }
 
@@ -240,7 +247,7 @@ RSpec.describe Charming::Components::Table do
     end
 
     it "pads wide-character cells by display width" do
-      table = described_class.new(header: ["N"], rows: [["日本"]])
+      table = described_class.new(header: ["N"], rows: [["日本"]], theme: theme)
 
       lines = table.render.lines(chomp: true).map { |line| Charming::UI::Width.strip_ansi(line) }
 
@@ -248,7 +255,7 @@ RSpec.describe Charming::Components::Table do
     end
 
     it "pads short rows with empty cells" do
-      table = described_class.new(header: %w[Name Age], rows: [["Ada"]])
+      table = described_class.new(header: %w[Name Age], rows: [["Ada"]], theme: theme)
 
       lines = table.render.lines(chomp: true).map { |line| Charming::UI::Width.strip_ansi(line) }
 
@@ -264,7 +271,7 @@ RSpec.describe Charming::Components::Table do
     end
 
     it "renders rows without a header line when the header is empty" do
-      table = described_class.new(header: [], rows: [["a", "bb"]])
+      table = described_class.new(header: [], rows: [["a", "bb"]], theme: theme)
 
       lines = table.render.lines(chomp: true).map { |line| Charming::UI::Width.strip_ansi(line) }
 
@@ -473,7 +480,8 @@ RSpec.describe Charming::Components::Table do
     let(:table) do
       described_class.new(
         header: %w[Name Stars],
-        rows: [["bubbletea", "27000"], ["charming", "120"], ["lipgloss", "8000"]]
+        rows: [["bubbletea", "27000"], ["charming", "120"], ["lipgloss", "8000"]],
+        theme: Charming::UI::Theme.default
       )
     end
 
